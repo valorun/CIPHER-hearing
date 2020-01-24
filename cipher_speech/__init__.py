@@ -1,12 +1,12 @@
 # coding: utf-8
 import numpy as np
 import json
-import os
 import logging
 import paho.mqtt.client as Mqtt
+from os.path import exists
 from logging.handlers import RotatingFileHandler
 from logging.config import dictConfig
-from .constants import MQTT_CLIENT_ID, MQTT_BROKER_URL, MQTT_BROKER_PORT, LOG_FILE
+from .constants import MQTT_CLIENT_ID, MQTT_BROKER_URL, MQTT_BROKER_PORT, LOG_FILE, TRAINED_MODEL_PATH
 
 from .classification import models, reader, features
 from .record import Listener, record, SAMPLERATE
@@ -20,8 +20,12 @@ def create_app(debug=False):
     mqtt = Mqtt.Client(MQTT_CLIENT_ID)
     dataset = reader.get_dataset(features.mean_mffcs)
     model = models.KNNModel(3, 0.6)
-    model.train(dataset)
-    #model.load('knn_model.joblib')
+
+    if exists(TRAINED_MODEL_PATH):
+        model.load(TRAINED_MODEL_PATH)
+    else:
+        model.train(dataset)
+        model.save(TRAINED_MODEL_PATH)
 
     def on_wake_word():
         """
@@ -62,6 +66,8 @@ def create_app(debug=False):
         """
         logging.info("Connected with result code " + str(rc))
         client.subscribe('server/connect')
+        client.subscribe('speech/start')
+        client.subscribe('speech/stop')
         listener.start()
 
 
@@ -75,13 +81,13 @@ def create_app(debug=False):
         except ValueError:
             data = msg.payload.decode('utf-8')
         if topic == 'server/connect': #when the server start or restart, notify this raspberry is connected
-            print()
+            pass
+        elif topic == 'speech/start':
+            listener.start()
+        elif topic == 'speech/stop':
+            listener.stop()
 
 
-    #print(model.predict([mean_mffcs('test.wav')]))
-    #print(model.predict_proba([mean_mffcs('test.wav')]))
-
-    #model.save('knn_model.joblib')
 
     mqtt.on_connect = on_connect
     mqtt.on_message = on_message

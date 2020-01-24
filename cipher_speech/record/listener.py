@@ -21,6 +21,7 @@ class Listener:
         Listener.q.put(indata.copy())
         
     def start(self):
+        logging.info("Listener started")
         self.listening = True
         logging.info("Starting listening ...")
         with sd.InputStream(samplerate=self.samplerate, channels=self.channels, callback=Listener._device_callback):
@@ -34,4 +35,5 @@ class Listener:
                         self.on_noise(rec)
 
     def stop(self):
+        logging.info("Listener stopped")
         self.listening = False
