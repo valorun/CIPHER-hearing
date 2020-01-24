@@ -1,15 +1,12 @@
 #!/usr/bin/python3
 # coding: utf-8
-from features import mean_mffcs
-from models import KNNModel
-from reader import get_dataset
-from record import record
+import logging
+from cipher_speech import create_app, setup_logger
 
-#dataset = get_dataset(mean_mffcs)
-model = KNNModel(2)
-#model.train(dataset)
-model.load('knn_model.joblib')
-record('test.wav')
-print(model.predict([mean_mffcs('test.wav')]))
+DEBUG = True
 
-#model.save('knn_model.joblib')
+if __name__ == '__main__':
+    setup_logger(debug=DEBUG)
+    client = create_app(debug=DEBUG)
+    logging.info("Application started")
+    client.loop_forever()

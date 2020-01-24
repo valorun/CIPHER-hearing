@@ -1,6 +1,6 @@
-scipy
 numpy
 python_speech_features
 scikit-learn
 sounddevice
+soundfile
 joblib

@@ -1,7 +1,7 @@
 from sklearn.neighbors import KNeighborsClassifier 
 from sklearn.model_selection import train_test_split 
 import joblib
-  
+
 
 class LabeledDataset:
     def __init__(self, dataset:list, labels:list):
@@ -25,9 +25,9 @@ class Model:
         """
         pass
 
-    def score(self, labeled_dataset:LabeledDataset):
+    def predict_proba(self, dataset:list):
         """
-        Return the mean accuracy on the given test dataset.
+        Return probability estimates for the provided dataset.
         """
         pass
 
@@ -39,15 +39,23 @@ class Model:
 
 
 class KNNModel(Model):
-    def __init__(self, k):
+    def __init__(self, k, min_proba):
         super().__init__()
         self.knn = KNeighborsClassifier(n_neighbors=k)
+        self.min_proba = min_proba
 
     def train(self, labeled_dataset):
         self.knn.fit(labeled_dataset.dataset, labeled_dataset.labels)
 
     def predict(self, dataset):
-        return self.knn.predict(dataset)
+        probabilities = self.predict_proba(dataset)
+        prediction = self.knn.predict(dataset)
+
+        # delete all distant predictions
+        return [prediction[i] for i in range(len(probabilities)) if max(probabilities[i]) > self.min_proba]
+
+    def predict_proba(self, dataset):
+        return self.knn.predict_proba(dataset)
 
     def save(self, filename):
         joblib.dump(self.knn, filename)
