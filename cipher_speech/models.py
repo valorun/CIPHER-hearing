@@ -4,8 +4,8 @@ import joblib
 
 
 class LabeledDataset:
-    def __init__(self, dataset:list, labels:list):
-        self.dataset = dataset
+    def __init__(self, features:list, labels:list):
+        self.features = features
         self.labels = labels
 
 
@@ -31,6 +31,12 @@ class Model:
         """
         pass
 
+    #def score(self, labeled_dataset:LabeledDataset):
+    #    """
+    #    Return the mean accuracy on the given test data and labels.
+    #    """
+    #    pass
+
     def save(self):
         pass
 
@@ -42,10 +48,10 @@ class KNNModel(Model):
     def __init__(self, k, min_proba):
         super().__init__()
         self.knn = KNeighborsClassifier(n_neighbors=k)
-        self.min_proba = min_proba
+        self.min_proba = min_proba # min proba allowing a classe being selected
 
     def train(self, labeled_dataset):
-        self.knn.fit(labeled_dataset.dataset, labeled_dataset.labels)
+        self.knn.fit(labeled_dataset.features, labeled_dataset.labels)
 
     def predict(self, dataset):
         probabilities = self.predict_proba(dataset)
@@ -56,6 +62,9 @@ class KNNModel(Model):
 
     def predict_proba(self, dataset):
         return self.knn.predict_proba(dataset)
+
+    #def score(self, labeled_dataset):
+    #    return self.knn.score(labeled_dataset.features, labeled_dataset.labels)
 
     def save(self, filename):
         joblib.dump(self.knn, filename)
