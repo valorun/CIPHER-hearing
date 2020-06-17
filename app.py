@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 # coding: utf-8
+
 import logging
 from cipher_speech import create_app, setup_logger
 

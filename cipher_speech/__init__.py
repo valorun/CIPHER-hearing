@@ -9,7 +9,7 @@ from logging.config import dictConfig
 from .constants import MQTT_CLIENT_ID, MQTT_BROKER_URL, MQTT_BROKER_PORT, LOG_FILE, TRAINED_MODEL_PATH
 from .models import KNNModel
 from .features import mean_mffcs
-from .reader import get_dataset
+from .reader import get_dataset, WAKE_WORD
 from .record import Listener, SAMPLERATE
 from .processes import pre_process
 
@@ -30,7 +30,7 @@ def create_app(debug=False):
         model.load(TRAINED_MODEL_PATH)
     else:
         logging.info("Extracting dataset ...")
-        dataset = reader.get_dataset(SELECTED_FEATURE, pre_process)
+        dataset = get_dataset(SELECTED_FEATURE, pre_process)
         logging.info("Training model ...")
         model.train(dataset)
         model.save(TRAINED_MODEL_PATH)
@@ -41,15 +41,15 @@ def create_app(debug=False):
         """
         rec = listener.record()
         rec = pre_process(rec, SAMPLERATE)
-        sf.write("test.wav", rec, SAMPLERATE)
         prediction = model.predict([SELECTED_FEATURE(rec, SAMPLERATE)])
         print(model.predict_proba([SELECTED_FEATURE(rec, SAMPLERATE)]))
         if len(prediction) > 0:
             logging.info("Intent '" + prediction[0] + "' detected.")
-            intent_payload = json.dumps({'intent': {'intentName': prediction[0]}})
+            intent_payload = json.dumps({'intentName': prediction[0]})
             mqtt.publish('speech/intent/' + prediction[0], intent_payload)
         else:
             logging.debug("No intent detected, maybe the threshold is too low ?")
+            sf.write("test.wav", rec, SAMPLERATE)
 
 
     def on_noise(data):
@@ -61,7 +61,7 @@ def create_app(debug=False):
         prediction = model.predict([SELECTED_FEATURE(data, SAMPLERATE)])
         #print(model.score(models.LabeledDataset([features.mean_mffcs(data, SAMPLERATE)], [reader.WAKE_WORD])))
         print(model.predict_proba([SELECTED_FEATURE(data, SAMPLERATE)]))
-        if len(prediction) > 0 and prediction[0] == reader.WAKE_WORD:
+        if len(prediction) > 0 and prediction[0] == WAKE_WORD:
             logging.info("Wake word detected")
             on_wake_word()
 
