@@ -19,7 +19,7 @@ def get_dataset(feature, pre_process):
             class_path = os.path.join(DATASET_PATH, class_path)
             for file in os.listdir(class_path):
                 if file.endswith('.wav'):
-                    data, rate = load(os.path.join(class_path, file))
+                    data, rate = load(os.path.join(class_path, file), sr=None)
                     dataset.append(feature(pre_process(data, rate), rate))
                     labels.append(class_name)
         return LabeledDataset(dataset, labels)

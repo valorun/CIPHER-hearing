@@ -16,7 +16,7 @@ def record(filename=None):
     return record
 
 if __name__ == '__main__':
-    n_samples = 24
+    n_samples = 1
     dir_number = "2"
 
     samples_path = join(DATASET_PATH, str(dir_number))

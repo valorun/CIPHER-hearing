@@ -56,8 +56,11 @@ def create_app(debug=False):
         """
         Function called when some noise is detected in the microphone.
         """
+        #print(len(data))
         data = pre_process(data, SAMPLERATE)
-        #print(data)
+        sf.write('./test.wav', data, SAMPLERATE) # Save as WAV file
+
+        print(model.knn.classes_)
         prediction = model.predict([SELECTED_FEATURE(data, SAMPLERATE)])
         #print(model.score(models.LabeledDataset([features.mean_mffcs(data, SAMPLERATE)], [reader.WAKE_WORD])))
         print(model.predict_proba([SELECTED_FEATURE(data, SAMPLERATE)]))
