@@ -1,9 +1,7 @@
 numpy
-#python_speech_features
 scikit-learn
 librosa
 sounddevice
+keras
 # used only for writting new files
 soundfile
-# used to save model state
-joblib

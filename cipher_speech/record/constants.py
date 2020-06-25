@@ -1,6 +1,0 @@
-SAMPLERATE = 16000  # Sample rate
-CHANNELS = 1
-DEFAULT_SAMPLE_DURATION = 3  # Duration of recording
-NOISE_THRESHOLD = 0.1
-
-SPEECH_TIMEOUT = 1

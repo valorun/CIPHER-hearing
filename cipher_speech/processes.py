@@ -4,14 +4,14 @@ from librosa.util import softmask, frame
 from librosa.decompose import nn_filter
 from librosa.effects import trim, split
 from librosa.feature import spectral_centroid
+from .constants import SAMPLERATE
 
-
-#def ambiant_noice_reduction(data, samplerate):
+#def ambiant_noice_reduction(data):
     # Divide the audio in frames of 25ms with hop length of 10ms.
-    #frames = frame(data, frame_length=round(samplerate*(0.025/60)), hop_length=round(samplerate*(0.010/60)))
+    #frames = frame(data, frame_length=round(SAMPLERATE*(0.025/60)), hop_length=round(SAMPLERATE*(0.010/60)))
     # Calculate the spectral centroids for each window.
-   # centroids = spectral_centroid(y=data, sr=samplerate, win_length=round(samplerate*(0.025/60)), hop_length=round(samplerate*(0.010/60)))
-    ##centroids = [spectral_centroid(y=f, sr=samplerate) for f in frames]
+   # centroids = spectral_centroid(y=data, sr=SAMPLERATE, win_length=round(SAMPLERATE*(0.025/60)), hop_length=round(samplerate*(0.010/60)))
+    ##centroids = [spectral_centroid(y=f, sr=SAMPLERATE) for f in frames]
     #lower_threshold = np.min(centroids)
     #upper_threshold = np.max(centroids)
     # Apply a lowshelf filter for gain=-30 and frequency as the lower threshold. Apply a highshelf filter for gain=-30 and higher threshold.
@@ -20,13 +20,13 @@ from librosa.feature import spectral_centroid
     #data_cleaned = less_noise(data)
     #return data_cleaned
 
-def voice_separation(data, samplerate):
+def voice_separation(data):
     S_full, phase = magphase(stft(data))
 
     S_filter = nn_filter(S_full,
                                        aggregate=np.median,
                                        metric='cosine')
-                                       #width=int(librosa.time_to_frames(2, sr=samplerate)))
+                                       #width=int(librosa.time_to_frames(2, sr=SAMPLERATE)))
 
     S_filter = np.minimum(S_full, S_filter)
     margin_i, margin_v = 2, 10
@@ -44,9 +44,10 @@ def voice_separation(data, samplerate):
     S_background = mask_i * S_full
     return istft(S_foreground)
 
-def pre_process(data, samplerate):
-    #data = ambiant_noice_reduction(data, samplerate)
-    #data = voice_separation(data, samplerate)
+def pre_process(data):
+    #data = ambiant_noice_reduction(data)
+    #data = voice_separation(data)
+    #data = data[::3] # downsampling
     data, trim_interval = trim(data, top_db=20, frame_length=2048, hop_length=512)
     non_silent_intervals = split(data, top_db=40, frame_length=100, hop_length=25)
     # get only the non silent intervals in the signal

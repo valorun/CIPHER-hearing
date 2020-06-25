@@ -1,7 +1,9 @@
 {
-    "WAKE_WORD": "wake_word",
-    "NOISE": "0",
-    "regardes_a_gauche": "1",
-    "regardes_a_droite": "2"
-
+    "wake_word": "WAKE_WORD",
+    "regardes_a_gauche": "regardes_a_gauche",
+    "regardes_a_droite": "regardes_a_droite",
+    "meteo1": "meteo",
+    "meteo2": "meteo",
+    "heure1": "heure",
+    "heure2": "heure"
 }
