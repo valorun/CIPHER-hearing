@@ -1,4 +1,3 @@
-# coding: utf-8
 import json
 import logging
 import paho.mqtt.client as Mqtt
@@ -8,36 +7,17 @@ from logging.handlers import RotatingFileHandler
 from logging.config import dictConfig
 from keras.models import load_model
 
-from .constants import MQTT_CLIENT_ID, MQTT_BROKER_URL, MQTT_BROKER_PORT, LOG_FILE, TRAINED_MODEL_PATH, SAMPLERATE, CHANNELS, WAKE_WORD_CLASS, DETECT_THRESHOLD
-from .features import SELECTED_FEATURE, N_SAMPLE_MFCCS, N_MFCC
-from .listener import Listener
-from .processes import pre_process
-from .reader import get_labels
-
-import soundfile as sf
+from .constants import MQTT_CLIENT_ID, MQTT_BROKER_URL, MQTT_BROKER_PORT, LOG_FILE, TRAINED_MODEL_PATH, TRAINED_MODEL_DATA_PATH, WAKE_WORD_CLASS, DETECT_THRESHOLD
+from .speech_recognizer import SpeechRecognizer
 
 mqtt = None
-
-def predict(model, data):
-    data_reshaped = data.reshape(1, N_SAMPLE_MFCCS, N_MFCC)
-    prediction = model.predict(data_reshaped)
-    
-    max_accuracy = np.max(prediction)
-
-    print(get_labels())
-    if max_accuracy < DETECT_THRESHOLD:
-        return None
-    best_class_index = np.argmax(prediction)
-    print(max_accuracy)
-    print(get_labels()[best_class_index])
-
-    return get_labels()[best_class_index]
 
 def create_app(debug=False):
     global mqtt
 
     mqtt = Mqtt.Client(MQTT_CLIENT_ID)
     model = None
+    model_data = None
    
     if exists(TRAINED_MODEL_PATH):
         logging.info("Loading model ...")
@@ -46,41 +26,21 @@ def create_app(debug=False):
         logging.error("No model found ! Exiting ...")
         exit(1)
 
-    def on_wake_word():
-        """
-        Function called when the wake word is detected.
-        """
-        rec = listener.record()
-        rec = pre_process(rec)
-        prediction = predict(model, SELECTED_FEATURE(rec))
-        if prediction is not None:
-            logging.info("Intent '" + prediction + "' detected.")
-            intent_payload = json.dumps({'intentName': prediction})
-            mqtt.publish('speech/intent/' + prediction, intent_payload)
-        else:
-            logging.debug("No intent detected, maybe the threshold is too low ?")
-            sf.write("test.wav", rec, SAMPLERATE)
+    if exists(TRAINED_MODEL_PATH):
+        logging.info("Loading model data ...")
+        with open(TRAINED_MODEL_DATA_PATH) as file:
+            model_data = json.load(file)
+    else:
+        logging.error("No model data found ! Exiting ...")
+        exit(1)
 
-
-    def on_noise(data):
-        """
-        Function called when some noise is detected in the microphone.
-        """
-        data = pre_process(data)
-        sf.write('./test.wav', data, SAMPLERATE) # Save as WAV file
-
-        prediction = predict(model, SELECTED_FEATURE(data))
-        if prediction == WAKE_WORD_CLASS:
-            logging.info("Wake word detected")
-            on_wake_word()
-
-    listener = Listener(on_noise)
+    recognizer = SpeechRecognizer(model, model_data, mqtt)
 
     def on_disconnect(client, userdata, rc):
         """
         Function called when the client disconnect from the server.
         """
-        listener.stop()
+        recognizer.stop()
         logging.info("Disconnected from server")
 
     def on_connect(client, userdata, flags, rc):
@@ -91,7 +51,7 @@ def create_app(debug=False):
         client.subscribe('server/connect')
         client.subscribe('speech/start')
         client.subscribe('speech/stop')
-        listener.start()
+        recognizer.start()
 
 
     def on_message(client, userdata, msg):
@@ -106,9 +66,9 @@ def create_app(debug=False):
         if topic == 'server/connect': #when the server start or restart, notify this raspberry is connected
             pass
         elif topic == 'speech/start':
-            listener.start()
+            recognizer.start()
         elif topic == 'speech/stop':
-            listener.stop()
+            recognizer.stop()
 
 
 
@@ -151,4 +111,3 @@ def setup_logger(debug=False):
             'handlers': ['default', 'file']
         },
     })
-	

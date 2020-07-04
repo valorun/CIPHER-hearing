@@ -3,5 +3,3 @@ scikit-learn
 librosa
 sounddevice
 keras
-# used only for writting new files
-soundfile

@@ -1,11 +1,5 @@
 import numpy as np
-from librosa.core import magphase, istft, stft
-from librosa.util import softmask, frame
-from librosa.decompose import nn_filter
 from librosa.effects import trim, split
-from librosa.feature import spectral_centroid
-from .constants import SAMPLERATE
-
 #def ambiant_noice_reduction(data):
     # Divide the audio in frames of 25ms with hop length of 10ms.
     #frames = frame(data, frame_length=round(SAMPLERATE*(0.025/60)), hop_length=round(SAMPLERATE*(0.010/60)))
@@ -20,37 +14,19 @@ from .constants import SAMPLERATE
     #data_cleaned = less_noise(data)
     #return data_cleaned
 
-def voice_separation(data):
-    S_full, phase = magphase(stft(data))
-
-    S_filter = nn_filter(S_full,
-                                       aggregate=np.median,
-                                       metric='cosine')
-                                       #width=int(librosa.time_to_frames(2, sr=SAMPLERATE)))
-
-    S_filter = np.minimum(S_full, S_filter)
-    margin_i, margin_v = 2, 10
-    power = 2
-
-    mask_i = softmask(S_filter,
-                                margin_i * (S_full - S_filter),
-                                power=power)
-
-    mask_v = softmask(S_full - S_filter,
-                                margin_v * S_filter,
-                                power=power)
-
-    S_foreground = mask_v * S_full
-    S_background = mask_i * S_full
-    return istft(S_foreground)
-
-def pre_process(data):
+def pre_process(data, samplerate, default_sample_duration):
     #data = ambiant_noice_reduction(data)
-    #data = voice_separation(data)
     #data = data[::3] # downsampling
     data, trim_interval = trim(data, top_db=20, frame_length=2048, hop_length=512)
     non_silent_intervals = split(data, top_db=40, frame_length=100, hop_length=25)
     # get only the non silent intervals in the signal
     data = data[non_silent_intervals[0][0]:non_silent_intervals[0][1]]
-    return data
+
+    padded = np.zeros(samplerate*default_sample_duration)
+    # if the sample is too long, cut it
+    data = data[:samplerate*default_sample_duration]
+    # if the sample is too short, pad it
+    padded[:data.shape[0]] = data
+
+    return padded
 
