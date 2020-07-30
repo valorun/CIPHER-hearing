@@ -3,6 +3,7 @@
 
 from constants import DATASET_PATH, SAMPLERATE, CHANNELS, DEFAULT_SAMPLE_DURATION
 from os.path import join, exists
+from os import makedirs
 from librosa.output import write_wav
 import sounddevice as sd
 
@@ -15,9 +16,11 @@ def record(filename=None):
 
 if __name__ == '__main__':
     n_samples = 40
-    dir_name = "noise"
+    dir_name = "humeur"
 
     samples_path = join(DATASET_PATH, str(dir_name))
+    if not exists(samples_path):
+        makedirs(samples_path)
 
     i = 0
     for n in range(1, n_samples):

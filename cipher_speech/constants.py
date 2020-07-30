@@ -9,7 +9,7 @@ LOG_FILE=join(dirname(__file__), 'app.log')
 TRAINED_MODEL_PATH=join(dirname(__file__), 'trained_model')
 TRAINED_MODEL_DATA_PATH=join(dirname(__file__), 'model_data.json')
 
-NOISE_THRESHOLD = 0.1
+NOISE_THRESHOLD = 0.15
 DETECT_THRESHOLD = 0.5
 SPEECH_TIMEOUT = 1
 
