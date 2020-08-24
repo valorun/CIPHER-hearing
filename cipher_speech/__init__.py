@@ -51,8 +51,14 @@ def create_app(debug=False):
         client.subscribe('server/connect')
         client.subscribe('speech/start')
         client.subscribe('speech/stop')
-        recognizer.start()
+        notify_server_connection()
+        #recognizer.start()
 
+    def notify_server_connection():
+        """
+        Give all information about the connected client to the server when needed.
+        """
+        mqtt.publish('speech/connect', json.dumps({'id':MQTT_CLIENT_ID}))
 
     def on_message(client, userdata, msg):
         """
@@ -63,19 +69,19 @@ def create_app(debug=False):
             data = json.loads(msg.payload.decode('utf-8'))
         except ValueError:
             data = msg.payload.decode('utf-8')
-        if topic == 'server/connect': #when the server start or restart, notify this raspberry is connected
-            pass
+        if topic == 'server/connect': #when the server start or restart, notify this client is connected
+            notify_server_connection()
         elif topic == 'speech/start':
             recognizer.start()
+            logging.info("Started speech recognition")
         elif topic == 'speech/stop':
             recognizer.stop()
-
-
+            logging.info("Stopped speech recognition")
 
     mqtt.on_connect = on_connect
     mqtt.on_message = on_message
     mqtt.on_disconnect = on_disconnect
-    mqtt.enable_logger()
+    #mqtt.enable_logger()
 
     mqtt.connect(MQTT_BROKER_URL, MQTT_BROKER_PORT, 60)
 

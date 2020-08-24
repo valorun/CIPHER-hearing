@@ -1,4 +1,5 @@
 from multiprocessing import Queue
+from threading import Thread, Lock
 import numpy as np
 import time
 import sounddevice as sd
@@ -13,7 +14,7 @@ class Listener:
         self.threshold = NOISE_THRESHOLD # noise threshold
         self.speech_timeout = SPEECH_TIMEOUT
         self.on_noise = on_noise
-        self.listening = False
+        self.listening = Lock()
 
     @staticmethod
     def _device_callback(indata, frames, time, status):
@@ -42,18 +43,19 @@ class Listener:
         
         return rec
 
-    def start(self):
-        self.listening = True
+    def _start(self):
+        self.listening.acquire()
         with sd.InputStream(samplerate=self.samplerate, channels=self.channels, callback=Listener._device_callback):
-            while self.listening:
+            while self.listening.locked():
                 data = Listener.q.get()
                 rms_val = rms(data)
-
                 if rms_val > self.threshold:
                     rec = self.record()
                     if self.on_noise is not None:
                         self.on_noise(rec)
 
+    def start(self):
+        Thread(target=self._start).start()
 
     def stop(self):
-        self.listening = False
+        self.listening.release()

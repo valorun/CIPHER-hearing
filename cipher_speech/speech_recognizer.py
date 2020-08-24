@@ -22,8 +22,8 @@ class SpeechRecognizer():
         prediction = self.model.predict(data_reshaped)
         
         max_accuracy = np.max(prediction)
-        print(self.intents[np.argmax(prediction)])
-        print(max_accuracy)
+        #print(self.intents[np.argmax(prediction)])
+        #print(max_accuracy)
 
         if max_accuracy < DETECT_THRESHOLD:
             return None, 1.0
