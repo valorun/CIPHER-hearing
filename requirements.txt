@@ -3,3 +3,4 @@ scikit-learn
 librosa
 sounddevice
 keras
+paho-mqtt
