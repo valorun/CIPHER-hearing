@@ -6,9 +6,6 @@ from .features import mfccs, N_SAMPLE_MFCCS, N_MFCC
 from .listener import Listener
 from .processes import pre_process
 
-from librosa.output import write_wav
-
-
 class SpeechRecognizer():
     def __init__(self, model, model_data, client):
         self.model = model
@@ -49,11 +46,7 @@ class SpeechRecognizer():
         Function called when some noise is detected in the microphone.
         """
         logging.info("Noise detected")
-        #write_wav('./test1.wav', data, get_model_data()['samplerate']) # Save as WAV file
-
         data = pre_process(data, self.model_data['samplerate'], self.model_data['default_sample_duration'])
-
-        #write_wav('./test.wav', data, get_model_data()['samplerate']) # Save as WAV file
 
         prediction, accuracy = self.predict(mfccs(data, self.model_data['samplerate']))
         if prediction == WAKE_WORD_CLASS:
