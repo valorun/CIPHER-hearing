@@ -7,7 +7,7 @@ from logging.handlers import RotatingFileHandler
 from logging.config import dictConfig
 from keras.models import load_model
 
-from .constants import MQTT_CLIENT_ID, MQTT_BROKER_URL, MQTT_BROKER_PORT, LOG_FILE, TRAINED_MODEL_PATH, TRAINED_MODEL_DATA_PATH, WAKE_WORD_CLASS, DETECT_THRESHOLD
+from .constants import MQTT_CLIENT_ID, MQTT_BROKER_URL, MQTT_BROKER_PORT, LOG_FILE, ICON, TRAINED_MODEL_PATH, TRAINED_MODEL_DATA_PATH, WAKE_WORD_CLASS, DETECT_THRESHOLD
 from .speech_recognizer import SpeechRecognizer
 
 mqtt = None
@@ -51,6 +51,7 @@ def create_app(debug=False):
         client.subscribe('server/connect')
         client.subscribe('speech/start')
         client.subscribe('speech/stop')
+        client.subscribe('client/' + MQTT_CLIENT_ID + '/#')
         notify_server_connection()
         #recognizer.start()
 
@@ -59,6 +60,7 @@ def create_app(debug=False):
         Give all information about the connected client to the server when needed.
         """
         mqtt.publish('speech/connect', json.dumps({'id':MQTT_CLIENT_ID}))
+        mqtt.publish('client/connect', json.dumps({'id':MQTT_CLIENT_ID, 'icon':ICON}))
 
     def on_message(client, userdata, msg):
         """
@@ -77,6 +79,8 @@ def create_app(debug=False):
         elif topic == 'speech/stop':
             recognizer.stop()
             logging.info("Stopped speech recognition")
+        elif topic == 'client/' + MQTT_CLIENT_ID + '/exit':
+            exit(0)
 
     mqtt.on_connect = on_connect
     mqtt.on_message = on_message
