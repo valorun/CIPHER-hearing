@@ -10,9 +10,9 @@ from keras.utils import to_categorical
 from os.path import join
 from pathlib import Path
 from os import listdir
-from cipher_speech.features import N_SAMPLE_MFCCS, N_MFCC, mfccs
+from cipher_haring.features import N_SAMPLE_MFCCS, N_MFCC, mfccs
 from constants import SAMPLERATE, CHANNELS, DEFAULT_SAMPLE_DURATION, TRAINED_MODEL_PATH, TRAINED_MODEL_DATA_PATH, DATASET_PATH
-from cipher_speech.processes import pre_process
+from cipher_haring.processes import pre_process
 
 def get_labels():
     """
