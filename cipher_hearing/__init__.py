@@ -26,7 +26,7 @@ def create_app(debug=False):
         logging.error("No model found ! Exiting ...")
         exit(1)
 
-    if exists(TRAINED_MODEL_PATH):
+    if exists(TRAINED_MODEL_DATA_PATH):
         logging.info("Loading model data ...")
         with open(TRAINED_MODEL_DATA_PATH) as file:
             model_data = json.load(file)
