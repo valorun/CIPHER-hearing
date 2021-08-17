@@ -1,20 +1,24 @@
 from multiprocessing import Queue
 from threading import Thread, Lock
+from webrtcvad import Vad
 import numpy as np
 import time
 import sounddevice as sd
-from librosa.feature import rms 
 from .constants import SPEECH_TIMEOUT, NOISE_THRESHOLD
+
+def rms(arr):
+    return np.sqrt(np.mean(arr**2))
 
 class Listener:
     q = Queue()
-    def __init__(self, channels, samplerate, on_noise=None):
-        self.channels = channels
+    def __init__(self, samplerate, on_noise=None):
         self.samplerate = samplerate
         self.threshold = NOISE_THRESHOLD # noise threshold
         self.speech_timeout = SPEECH_TIMEOUT
         self.on_noise = on_noise
         self.listening = Lock()
+        self.vad = Vad()
+        self.vad.set_mode(3) # very restrictive filtering
 
     @staticmethod
     def _device_callback(indata, frames, time, status):
@@ -28,34 +32,30 @@ class Listener:
         Listener.q.put(data)
 
     def record(self):
-        rec = np.array([])
         current = time.time()
         end = time.time() + self.speech_timeout
 
         # record until no sound is detected or time is over
         while current <= end:
             data = Listener.q.get()
-            if rms(data) >= self.threshold: 
+            if self.vad.is_speech(data.tobytes(), self.samplerate):
                 end = time.time() + self.speech_timeout
             current = time.time()
-            rec = np.append(rec, data)
+            if self.on_noise is not None:
+                self.on_noise()
         #print(end - start)
         
-        return rec
-
     def _start(self):
         self.listening.acquire()
-        with sd.InputStream(samplerate=self.samplerate, channels=self.channels, callback=Listener._device_callback):
+        with sd.InputStream(samplerate=self.samplerate, channels=1, callback=Listener._device_callback, dtype='int16', blocksize=int(self.samplerate * 0.03)):
             while self.listening.locked():
                 data = Listener.q.get()
-                rms_val = rms(data)
-                if rms_val > self.threshold:
-                    rec = self.record()
-                    if self.on_noise is not None:
-                        self.on_noise(rec)
+                if self.vad.is_speech(data.tobytes(), self.samplerate):
+                    self.record()
 
     def start(self):
         Thread(target=self._start).start()
 
     def stop(self):
-        self.listening.release()
+        if self.listening.locked():
+            self.listening.release()

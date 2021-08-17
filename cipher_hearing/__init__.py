@@ -1,13 +1,11 @@
 import json
 import logging
 import paho.mqtt.client as Mqtt
-import numpy as np
 from os.path import exists
 from logging.handlers import RotatingFileHandler
 from logging.config import dictConfig
-from keras.models import load_model
 
-from .constants import MQTT_CLIENT_ID, MQTT_BROKER_URL, MQTT_BROKER_PORT, LOG_FILE, ICON, TRAINED_MODEL_PATH, TRAINED_MODEL_DATA_PATH, WAKE_WORD_CLASS, DETECT_THRESHOLD
+from .constants import MQTT_CLIENT_ID, MQTT_BROKER_URL, MQTT_BROKER_PORT, LOG_FILE, ICON, WAKEWORD_MODEL_PATH, VOSK_MODEL_PATH, SAMPLERATE
 from .speech_recognizer import SpeechRecognizer
 
 mqtt = None
@@ -16,25 +14,16 @@ def create_app(debug=False):
     global mqtt
 
     mqtt = Mqtt.Client(MQTT_CLIENT_ID)
-    model = None
-    model_data = None
    
-    if exists(TRAINED_MODEL_PATH):
-        logging.info("Loading model ...")
-        model = load_model(TRAINED_MODEL_PATH)
-    else:
-        logging.error("No model found ! Exiting ...")
+    if not exists(WAKEWORD_MODEL_PATH):
+        logging.error("No wakeword model found ! Exiting ...")
         exit(1)
 
-    if exists(TRAINED_MODEL_DATA_PATH):
-        logging.info("Loading model data ...")
-        with open(TRAINED_MODEL_DATA_PATH) as file:
-            model_data = json.load(file)
-    else:
-        logging.error("No model data found ! Exiting ...")
+    if not exists(VOSK_MODEL_PATH):
+        logging.error("No vosk model found ! Exiting ...")
         exit(1)
 
-    recognizer = SpeechRecognizer(model, model_data, mqtt)
+    recognizer = SpeechRecognizer(VOSK_MODEL_PATH, WAKEWORD_MODEL_PATH, SAMPLERATE, mqtt)
 
     def on_disconnect(client, userdata, rc):
         """

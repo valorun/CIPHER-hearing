@@ -1,6 +1,6 @@
 __pycache__
 *.log
 *.pyc
-*.wav
-*.json
-trained_model
+cipher_hearing/vosk_model/
+env/
+howl/

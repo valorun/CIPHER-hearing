@@ -8,11 +8,11 @@ LOG_FILE=join(dirname(__file__), 'app.log')
 
 ICON='fas fa-microphone'
 
-TRAINED_MODEL_PATH=join(dirname(__file__), 'trained_model')
-TRAINED_MODEL_DATA_PATH=join(dirname(__file__), 'model_data.json')
+VOSK_MODEL_PATH=join(dirname(__file__), 'vosk_model')
+WAKEWORD_MODEL_PATH=join(dirname(__file__), 'wakeword_model')
+WAKEWORD_MODEL='clarius'
+SAMPLERATE=16000
 
-NOISE_THRESHOLD = 0.15
-DETECT_THRESHOLD = 0.5
-SPEECH_TIMEOUT = 1
-
-WAKE_WORD_CLASS = 'WAKE_WORD'
+NOISE_THRESHOLD=70
+DETECT_THRESHOLD=0.5
+SPEECH_TIMEOUT=1
