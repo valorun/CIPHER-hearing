@@ -1,44 +1,40 @@
-from pathlib import Path
-
-import torch
-from howl.client import HowlClient
-from howl.context import InferenceContext
-from howl.data.transform import ZmuvTransform
-from howl.model import RegisteredModel, Workspace, workspace
-from howl.model.inference import FrameInferenceEngine, SequenceInferenceEngine
+import subprocess
+import json
+import errno
+import os
+from os.path import join
 
 class WakeDetector():
-    def __init__(self, model_name, samplerate=8000):
-        if model_name not in RegisteredModel.registered_names():
-           raise ValueError('Unknown model')
-        
-        ws = Workspace(Path(str(Path('workspaces') / 'default')), delete_existing=False)
-        settings = ws.load_settings()
+    def __init__(self, raven_path, wakeword_model_path, threshold, samplerate=16000):
+        self.raven_path = join(raven_path, 'bin', 'rhasspy-wake-raven')
+        self.raven_args = ['--keyword', wakeword_model_path, '--probability-threshold', str(threshold)]
+        self.start()
 
-        use_frame = settings.training.objective == 'frame'
-        ctx = InferenceContext(settings.training.vocab, token_type=settings.training.token_type, use_blank=not use_frame)
+    def start(self):
+        raven_command = [self.raven_path] + self.raven_args
+        self.raven_proc = subprocess.Popen(
+            raven_command, stdin=subprocess.PIPE, stdout=subprocess.PIPE
+        )
+        os.set_blocking(self.raven_proc.stdout.fileno(), False)
 
-        device = torch.device(settings.training.device)
-        zmuv_transform = ZmuvTransform().to(device)
-        model = RegisteredModel.find_registered_class(model_name)(ctx.num_labels).to(device).eval()
-        zmuv_transform.load_state_dict(torch.load(str(ws.path / 'zmuv.pt.bin'), map_location=device))
+    def stop(self):
+        self.raven_proc.terminate()
+        self.raven_proc.wait()
 
-        ws.load_model(model, best=True)
-        model.streaming()
-        if use_frame:
-            engine = FrameInferenceEngine(
-                int(settings.training.max_window_size_seconds * 1000),
-                int(settings.training.eval_stride_size_seconds * 1000),
-                model,
-                zmuv_transform,
-                ctx,
-            )
-        else:
-            engine = SequenceInferenceEngine(model, zmuv_transform, ctx)
-        
-        client = HowlClient(engine, ctx)
-        client.start().join()
+    def detect(self, data):
+        try:
+            self.raven_proc.stdin.write(data)
+            #self.raven_proc.stdin.flush()
+        except IOError as e:
+            if e.errno == errno.EPIPE or e.errno == errno.EINVAL:
+                raise
 
-    def detect(self):
-        self.wrdRec.record2File('wakeword_temp.wav')
-        return self.hwDet.isHotword('wakeword_temp.wav')
+        if self.raven_proc.stdout is not None:
+            try:
+                result = self.raven_proc.stdout.readline()
+                if result != b'':
+                    print(result)
+                    return json.loads(result)
+            except Exception as e:
+                raise
+        return None

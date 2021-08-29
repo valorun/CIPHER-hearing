@@ -1,31 +1,31 @@
-import json
-import numpy as np
 import logging
 import vosk
+from snips_nlu import SnipsNLUEngine
+from snips_nlu.default_configs import CONFIG_FR
 
-from .constants import DETECT_THRESHOLD
+from .constants import STT_THRESHOLD
 from .listener import Listener
-from .wakeword_detector import WakeDetector
 
 class SpeechRecognizer():
-    def __init__(self, vosk_model_path, wakeword_model_path, samplerate, client):
+    def __init__(self, vosk_model_path, wakeword_detector, client, samplerate=16000):
         self.stt = vosk.KaldiRecognizer(vosk.Model(vosk_model_path), samplerate)
-        self.samplerate = samplerate
         self.client = client
+        self.samplerate = samplerate
         self.listener = Listener(samplerate, self.on_noise)
-        self.wakeword_detector = WakeDetector(8000, wakeword_model_path)
+        self.wakeword_detector = wakeword_detector
+        self.nlu_engine = SnipsNLUEngine(config=CONFIG_FR)
+
+    def train_nlu(self, dataset):
+        self.nlu_engine = self.nlu_engine.fit(dataset)
 
     def predict(self, data):
         if self.stt.AcceptWaveform(data):
             result = self.stt.Result()
-            if 'test' in result:
+            if 'text' in result:
                 return result['text']
-            else:
-                return None
-        else:
-            return None
+        return None
             #return self.stt.PartialResult()
-        #if max_accuracy < DETECT_THRESHOLD:
+        #if max_accuracy < STT_THRESHOLD:
         #    return None, 1.0
         #best_class_index = np.argmax(prediction)
 
@@ -33,23 +33,28 @@ class SpeechRecognizer():
         """
         Function called when the wake word is detected.
         """
+        self.client.publish('server/hearing/wakeword')
+        print("Speak now")
         rec = self.listener.record()
-        pred = self.predict(rec)
-       
-        #if prediction is not None:
-        #    logging.info("Intent '%s' detected at %s%%.", prediction, int(accuracy*100))
-        #    self.client.publish('server/hearing/intent/' + prediction)
-        #else:
-        #    logging.debug("No intent detected, maybe the threshold is too low ?")
+        for r in rec:
+            transcription = self.predict(r)
+            if transcription is not None:
+                logging.info("Transcription: '%s'", transcription)
+                parsing = self.nlu_engine.parse(transcription)
+                if parsing is not None:
+                    intent = parsing["intent"]["intentName"]
+                    logging.info("Intent '%s' detected.", intent)
+                    self.client.publish('server/hearing/intent/' + intent)
+                else:
+                    logging.debug("No intent detected, maybe the threshold is too low ?")
+        print("END")
 
-    def on_noise(self):
+
+    def on_noise(self, data):
         """
         Function called when some noise is detected in the microphone.
         """
-        logging.info("Noise detected")
-
-        if self.wakeword_detector.detect():
-            logging.info("Wake word detected")
+        if self.wakeword_detector.detect(data) is not None:
             self.on_wakeword()
 
     def start(self):

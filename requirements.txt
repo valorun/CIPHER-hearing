@@ -4,3 +4,4 @@ SoundFile==0.10.3.post1
 paho-mqtt==1.5.1
 vosk==0.3.27
 snips-nlu==0.20.2
+webrtcvad==2.0.10
