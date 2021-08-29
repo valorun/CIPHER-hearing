@@ -3,7 +3,6 @@ import vosk
 from snips_nlu import SnipsNLUEngine
 from snips_nlu.default_configs import CONFIG_FR
 
-from .constants import STT_THRESHOLD
 from .listener import Listener
 
 class SpeechRecognizer():

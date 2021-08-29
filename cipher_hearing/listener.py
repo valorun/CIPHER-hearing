@@ -1,19 +1,15 @@
 from multiprocessing import Queue
 from threading import Thread, Lock
 from webrtcvad import Vad
-import numpy as np
 import time
 import sounddevice as sd
-from .constants import SPEECH_TIMEOUT, NOISE_THRESHOLD
+from .constants import SPEECH_TIMEOUT
 
-def rms(arr):
-    return np.sqrt(np.mean(arr**2))
 
 class Listener:
     q = Queue()
     def __init__(self, samplerate, on_noise=None):
         self.samplerate = samplerate
-        self.threshold = NOISE_THRESHOLD # noise threshold
         self.speech_timeout = SPEECH_TIMEOUT
         self.on_noise = on_noise
         self.listening = Lock()
@@ -47,7 +43,6 @@ class Listener:
         with sd.RawInputStream(samplerate=self.samplerate, channels=1, callback=Listener._device_callback, dtype='int16', blocksize=int(self.samplerate * 0.03)):
             while self.listening.locked():
                 data = Listener.q.get()
-                #if self.vad.is_speech(data.tobytes(), self.samplerate):
                 if self.on_noise is not None:
                     self.on_noise(data)
 
