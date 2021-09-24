@@ -1,4 +1,3 @@
-numpy==1.19.5
 sounddevice==0.4.1
 SoundFile==0.10.3.post1
 paho-mqtt==1.5.1
