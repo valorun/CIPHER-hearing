@@ -1,50 +1,80 @@
-# turnLightOn intent
 ---
 type: intent
-name: turnLightOn
+name: regard
 slots:
-  - name: room
-    entity: room
+  - name: direction
+    entity: direction
 utterances:
-  - Turn on the lights in the [room](kitchen)
-  - give me some light in the [room](bathroom) please
-  - Can you light up the [room](living room) ?
-  - switch the [room](bedroom)'s lights on please
+  - Regardes [direction](à droite)
+  - Peux-tu regarder [direction](à gauche) ?
 
-# turnLightOff intent
 ---
 type: intent
-name: turnLightOff
+name: deplacement
 slots:
-  - name: room
-    entity: room
+  - name: direction
+    entity: direction
 utterances:
-  - Turn off the lights in the [room](entrance)
-  - turn the [room](bathroom)'s light out please
-  - switch off the light the [room](kitchen), will you?
-  - Switch the [room](bedroom)'s lights off please
+  - Vas [direction](à droite)
+  - Déplaces toi [direction](vers l'avant)
+  - Peux-tu aller à [direction](à gauche) ?
+  - Diriges toi [direction](en arrière) ?
 
-# setTemperature intent
 ---
 type: intent
-name: setTemperature
-slots:
-  - name: room
-    entity: room
-  - name: roomTemperature
-    entity: snips/temperature
+name: humeur
 utterances:
-  - Set the temperature to [roomTemperature](19 degrees) in the [room](bedroom)
-  - please set the [room](living room)'s temperature to [roomTemperature](twenty two degrees celsius)
-  - I want [roomTemperature](75 degrees fahrenheit) in the [room](bathroom) please
-  - Can you increase the temperature to [roomTemperature](22 degrees) ?
+  - Comment vas-tu ?
+  - Ca va bien ?
+  - Es-tu en forme ?
+  - Tu va bien ?
 
-# room entity
+---
+type: intent
+name: nom
+utterances:
+  - Comment t'appelles-tu ?
+  - Quel est ton nom ?
+  - Dis-moi ton nom
+  - C'est quoi ton prénom ?
+
+---
+type: intent
+name: nom
+utterances:
+  - Comment t'appelles-tu ?
+  - Quel est ton nom ?
+  - Dis-moi ton nom
+  - C'est quoi ton prénom ?
+
+
+---
+type: intent
+name: meteo
+slots:
+  - name: location
+    entity: snips/city
+  - name: date
+    entity: snips/datetime
+utterances:
+  - Quel temps fait-il à [location](Paris) ?
+  - Dis-moi quel temps il fait à [location](Nantes) [date](aujourd'hui)
+  - Il fera quel temps [date](demain) à [location](Marseille) ?
+  - C'est quoi la météo pour [date](cette après midi) ?
+
+---
+type: intent
+name: date
+utterances:
+  - Quel jour sommes nous ?
+  - On est quel jour ?
+
 ---
 type: entity
-name: room
+name: direction
 automatically_extensible: no
 values:
-- bedroom
-- [living room, main room, lounge]
-- [garden, yard, backyard]
+- [gauche, à gauche, vers la gauche]
+- [droite, à droite, vers la droite]
+- [tout droit, en face, devant, en avant, vers l'avant]
+- [derrière, en arrière, vers l'arrière]
