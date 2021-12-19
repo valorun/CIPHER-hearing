@@ -8,12 +8,14 @@ LOG_FILE=join(dirname(__file__), 'app.log')
 
 ICON='fas fa-microphone'
 
-VOSK_MODEL_PATH=join(dirname(dirname(__file__)), 'vosk-model-fr-0.6-linto-2.0.0')
+VOSK_MODEL_PATH=join(dirname(dirname(__file__)), 'vosk-model-fr-0.6-linto-2.2.0')
 RAVEN_PATH=join(dirname(dirname(__file__)), 'rhasspy-wake-raven')
 WAKEWORD_MODEL_PATH=join(RAVEN_PATH, 'keyword-dir')
 SAMPLERATE=16000
 
+NLU_DATASET=join(dirname(dirname(__file__)), 'dataset/default.json')
+
 NOISE_THRESHOLD=70
 WAKEWORD_THRESHOLD=0.4
 STT_THRESHOLD=0.5
-SPEECH_TIMEOUT=1
+SPEECH_TIMEOUT=2

@@ -24,14 +24,14 @@ class Listener:
         Listener.q.put(bytes(indata))
 
     def record(self):
-        recorded_data = []
+        recorded_data = b''
         current = time.time()
         end = time.time() + self.speech_timeout
 
         # record until no sound is detected or time is over
         while current <= end:
             data = Listener.q.get()
-            recorded_data.append(data)
+            recorded_data += data
             if self.vad.is_speech(data, self.samplerate):
                 end = time.time() + self.speech_timeout
             current = time.time()

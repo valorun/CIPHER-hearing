@@ -1,6 +1,6 @@
 __pycache__
 *.log
 *.pyc
-cipher_hearing/vosk_model/
-env/
-howl/
+venv/
+vosk-model-*
+rhasspy-wake-raven/

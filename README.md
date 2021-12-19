@@ -1,10 +1,11 @@
 # **C.I.P.H.E.R-hearing**
-Programme de reconnaissance vocale compatible avec le logiciel de robotique C.I.P.H.E.R. Il se présente sous la forme d'une application exécutée en local. Le coeur de la reconnaissance se base sur la classification des MFCC obtenus sur un certain nombre d'échantillons audios. La volonté est de fournir un modèle d'apprentissage simple. Il s'agit à l'heure actuelle d'un réseau neuronal de type LSTM.
+Programme de reconnaissance vocale compatible avec le logiciel de robotique C.I.P.H.E.R. Il se présente sous la forme d'une application exécutée en local. Le coeur de la reconnaissance se base sur 3 composantes:
+- [Rhasspy Raven](https://github.com/rhasspy/rhasspy-wake-raven), un détecteur de wakework pouvant être entrainé localement.
+- [Vosk](https://alphacephei.com/vosk/), un moteur de transcription vocal basé sur Kaldi.
+- [Snips NLU](https://github.com/snipsco/snips-nlu), une bibliothèque Python de compréhension du langage.
 
-https://hal.inria.fr/hal-01835440/file/ICNLSP2018.pdf
-https://www.researchgate.net/publication/334854543_Deep_Learning_Long-Short_Term_Memory_LSTM_for_Indonesian_Speech_Digit_Recognition_using_LPC_and_MFCC_Feature
-http://wei-xue.com/papers/ISCSLP16_jia.pdf
-https://scholarworks.sjsu.edu/cgi/viewcontent.cgi?article=1685&context=etd_projects
-
-https://github.com/MycroftAI/mycroft-precise
-https://github.com/MycroftAI/mycroft-precise/wiki/Training-your-own-wake-word#how-to-train-your-own-wake-word
+La processus ce déroule d'une façon similaire à n'importe quel système de reconnaissance vocale:
+- Détection du mot clé d'activaton.
+- Ecoute et transcription sous forme de texte.
+- Analyse du texte et reconnaissance des intentions.
+- Envoie du résultat au serveur via MQTT. 

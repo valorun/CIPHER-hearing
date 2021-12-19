@@ -47,6 +47,7 @@ cd rhasspy-wake-raven
 ./configure
 make
 make install
+source .venv/bin/activate
 
 # record templates, at least 3
 arecord -r 16000 -f S16_LE -c 1 -t raw | \
@@ -56,12 +57,15 @@ arecord -r 16000 -f S16_LE -c 1 -t raw | \
 
 ### Vosk STT ###
 cd $APP_PATH
-https://alphacephei.com/vosk/models/vosk-model-fr-0.6-linto-2.2.0.zip
+source $APP_PATH/venv/bin/activate
+curl -LO https://alphacephei.com/vosk/models/vosk-model-fr-0.6-linto-2.2.0.zip
 unzip vosk-model-fr-0.6-linto-2.2.0.zip
 
 ### Snips NLU ###
-python -m snips_nlu download fr
-python -m snips-nlu generate-dataset fr dataset.yaml > dataset.json
+snips_nlu download fr
+snips-nlu generate-dataset fr dataset/default.yml > dataset/dataset.json
+# Install prebuilt entities
+snips-nlu download-entity snips/city fr
 
 ### configure client ###
 CONFIG_FILE=$APP_PATH/cipher_hearing/config.ini

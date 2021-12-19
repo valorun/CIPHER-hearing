@@ -5,7 +5,9 @@ from os.path import exists
 from logging.handlers import RotatingFileHandler
 from logging.config import dictConfig
 
-from .constants import MQTT_CLIENT_ID, MQTT_BROKER_URL, MQTT_BROKER_PORT, LOG_FILE, ICON, RAVEN_PATH, WAKEWORD_MODEL_PATH, VOSK_MODEL_PATH, WAKEWORD_THRESHOLD, SAMPLERATE
+from .constants import MQTT_CLIENT_ID, MQTT_BROKER_URL, \
+    MQTT_BROKER_PORT, LOG_FILE, ICON, RAVEN_PATH, WAKEWORD_MODEL_PATH, \
+    VOSK_MODEL_PATH, WAKEWORD_THRESHOLD, SAMPLERATE, NLU_DATASET
 from .speech_recognizer import SpeechRecognizer
 from .wakeword_detector import WakeDetector
 
@@ -25,7 +27,7 @@ def create_app(debug=False):
         exit(1)
 
     wakeword_detector = WakeDetector(RAVEN_PATH, WAKEWORD_MODEL_PATH, WAKEWORD_THRESHOLD, SAMPLERATE)
-    recognizer = SpeechRecognizer(VOSK_MODEL_PATH, wakeword_detector, mqtt, SAMPLERATE)
+    recognizer = SpeechRecognizer(VOSK_MODEL_PATH, wakeword_detector, NLU_DATASET, mqtt, SAMPLERATE)
 
     def on_disconnect(client, userdata, rc):
         """

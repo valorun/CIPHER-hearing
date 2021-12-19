@@ -33,7 +33,6 @@ class WakeDetector():
             try:
                 result = self.raven_proc.stdout.readline()
                 if result != b'':
-                    print(result)
                     return json.loads(result)
             except Exception as e:
                 raise
