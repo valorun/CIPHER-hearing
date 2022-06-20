@@ -1,0 +1,11 @@
+[Unit]
+Description=CIPHER robotic client STT
+After=network.target
+
+[Service]
+WorkingDirectory=/home/pi/CIPHER-hearing
+ExecStart=/home/pi/CIPHER-hearing/venv/bin/python3 /home/pi/CIPHER-hearing/app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
