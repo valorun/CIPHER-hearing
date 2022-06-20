@@ -1,0 +1,6 @@
+snips-nlu==0.20.2
+sounddevice==0.4.1
+SoundFile==0.10.3.post1
+paho-mqtt==1.5.1
+vosk==0.3.27
+webrtcvad==2.0.10
