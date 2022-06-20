@@ -3,14 +3,14 @@ from threading import Thread, Lock
 from webrtcvad import Vad
 import time
 import sounddevice as sd
-from .constants import SPEECH_TIMEOUT
+from .config import client_config
 
 
 class Listener:
     q = Queue()
     def __init__(self, samplerate, on_noise=None):
         self.samplerate = samplerate
-        self.speech_timeout = SPEECH_TIMEOUT
+        self.speech_timeout = client_config.SPEECH_TIMEOUT
         self.on_noise = on_noise
         self.listening = Lock()
         self.vad = Vad()

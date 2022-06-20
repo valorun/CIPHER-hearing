@@ -3,8 +3,9 @@
 
 import logging
 from cipher_hearing import create_app, setup_logger
+from cipher_hearing.config import client_config
 
-DEBUG = True
+DEBUG = client_config.DEBUG
 
 if __name__ == '__main__':
     setup_logger(debug=DEBUG)

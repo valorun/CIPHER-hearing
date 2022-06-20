@@ -26,10 +26,13 @@ add_to_startup(){
 ### requirements ###
 apt-get -y install "python3"
 apt-get -y install "python3-pip"
+apt-get -y install "python3-numpy"
+apt-get -y install "python3-scipy"
+apt-get -y install "libportaudio2"
 
 APP_PATH=$(cd $(dirname "$0") && pwd)
 echo "Application path: $APP_PATH"
-python3 -m venv venv
+python3 -m venv venv --system-site-packages
 source $APP_PATH/venv/bin/activate
 
 if [ -e $APP_PATH/requirements.txt ]
@@ -42,7 +45,10 @@ fi
 
 ### Raven wakeword detector ###
 cd $APP_PATH
-git clone https://github.com/rhasspy/rhasspy-wake-raven.git
+git clone https://github.com/rhasspy/rhasspy-wake-raven.git raven
+mv -n raven/* rhasspy-wake-raven/
+mv -n raven/scripts/* rhasspy-wake-raven/scripts/
+rm -r raven
 cd rhasspy-wake-raven
 ./configure
 make
@@ -65,7 +71,7 @@ unzip vosk-model-fr-0.6-linto-2.2.0.zip
 snips_nlu download fr
 snips-nlu generate-dataset fr dataset/default.yml > dataset/dataset.json
 # Install prebuilt entities
-snips-nlu download-entity snips/city fr
+#snips-nlu download-entity snips/city fr
 
 ### configure client ###
 CONFIG_FILE=$APP_PATH/cipher_hearing/config.ini
@@ -78,7 +84,7 @@ addr=${addr:-localhost}
 port=${port:-1883}
 
 echo -e "[GENERAL]" > $CONFIG_FILE
-echo -e "RASPBERRY_ID=$id" >> $CONFIG_FILE
+echo -e "MQTT_CLIENT_ID=$id" >> $CONFIG_FILE
 echo -e "\n[MQTT_BROKER]" >> $CONFIG_FILE
 echo -e "URL=$addr" >> $CONFIG_FILE
 echo -e "PORT=$port" >> $CONFIG_FILE

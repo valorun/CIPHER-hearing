@@ -4,10 +4,8 @@ import paho.mqtt.client as Mqtt
 from os.path import exists
 from logging.handlers import RotatingFileHandler
 from logging.config import dictConfig
+from .config import client_config
 
-from .constants import MQTT_CLIENT_ID, MQTT_BROKER_URL, \
-    MQTT_BROKER_PORT, LOG_FILE, ICON, RAVEN_PATH, WAKEWORD_MODEL_PATH, \
-    VOSK_MODEL_PATH, WAKEWORD_THRESHOLD, SAMPLERATE, NLU_DATASET
 from .speech_recognizer import SpeechRecognizer
 from .wakeword_detector import WakeDetector
 
@@ -16,18 +14,25 @@ mqtt = None
 def create_app(debug=False):
     global mqtt
 
-    mqtt = Mqtt.Client(MQTT_CLIENT_ID)
+    mqtt = Mqtt.Client(client_config.MQTT_CLIENT_ID)
    
-    if not exists(WAKEWORD_MODEL_PATH):
+    if not exists(client_config.WAKEWORD_MODEL_PATH):
         logging.error("No wakeword model found ! Exiting ...")
         exit(1)
 
-    if not exists(VOSK_MODEL_PATH):
+    if not exists(client_config.VOSK_MODEL_PATH):
         logging.error("No vosk model found ! Exiting ...")
         exit(1)
 
-    wakeword_detector = WakeDetector(RAVEN_PATH, WAKEWORD_MODEL_PATH, WAKEWORD_THRESHOLD, SAMPLERATE)
-    recognizer = SpeechRecognizer(VOSK_MODEL_PATH, wakeword_detector, NLU_DATASET, mqtt, SAMPLERATE)
+    wakeword_detector = WakeDetector(client_config.RAVEN_PATH, 
+                                    client_config.WAKEWORD_MODEL_PATH, 
+                                    client_config.WAKEWORD_THRESHOLD, 
+                                    client_config.SAMPLERATE)
+    recognizer = SpeechRecognizer(client_config.VOSK_MODEL_PATH, 
+                                    wakeword_detector, 
+                                    client_config.NLU_DATASET, 
+                                    mqtt, 
+                                    client_config.SAMPLERATE)
 
     def on_disconnect(client, userdata, rc):
         """
@@ -42,7 +47,7 @@ def create_app(debug=False):
         """
         logging.info("Connected with result code " + str(rc))
         client.subscribe('server/connect')
-        client.subscribe('client/' + MQTT_CLIENT_ID + '/#')
+        client.subscribe('client/' + client_config.MQTT_CLIENT_ID + '/#')
         notify_server_connection()
         recognizer.start()
 
@@ -50,7 +55,7 @@ def create_app(debug=False):
         """
         Give all information about the connected client to the server when needed.
         """
-        mqtt.publish('client/connect', json.dumps({'id':MQTT_CLIENT_ID, 'icon':ICON}))
+        mqtt.publish('client/connect', json.dumps({'id':client_config.MQTT_CLIENT_ID, 'icon':client_config.ICON}))
 
     def on_message(client, userdata, msg):
         """
@@ -63,13 +68,13 @@ def create_app(debug=False):
             data = msg.payload.decode('utf-8')
         if topic == 'server/connect': #when the server start or restart, notify this client is connected
             notify_server_connection()
-        elif topic == 'client/' + MQTT_CLIENT_ID +'/start':
+        elif topic == 'client/' + client_config.MQTT_CLIENT_ID +'/start':
             recognizer.start()
             logging.info("Started speech recognition")
-        elif topic == 'client/' + MQTT_CLIENT_ID + '/stop':
+        elif topic == 'client/' + client_config.MQTT_CLIENT_ID + '/stop':
             recognizer.stop()
             logging.info("Stopped speech recognition")
-        elif topic == 'client/' + MQTT_CLIENT_ID + '/exit':
+        elif topic == 'client/' + client_config.MQTT_CLIENT_ID + '/exit':
             exit(0)
 
     mqtt.on_connect = on_connect
@@ -77,7 +82,7 @@ def create_app(debug=False):
     mqtt.on_disconnect = on_disconnect
     #mqtt.enable_logger()
 
-    mqtt.connect(MQTT_BROKER_URL, MQTT_BROKER_PORT, 60)
+    mqtt.connect(client_config.MQTT_BROKER_URL, client_config.MQTT_BROKER_PORT, 60)
 
     return mqtt
 
@@ -101,7 +106,7 @@ def setup_logger(debug=False):
             'file': { 
                 'formatter': 'default',
                 'class': 'logging.handlers.RotatingFileHandler',
-                'filename': LOG_FILE,
+                'filename': client_config.LOG_FILE,
                 'maxBytes': 1024
             }
         },
