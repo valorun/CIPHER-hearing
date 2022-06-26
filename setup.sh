@@ -68,10 +68,18 @@ curl -LO https://alphacephei.com/vosk/models/vosk-model-fr-0.6-linto-2.2.0.zip
 unzip vosk-model-fr-0.6-linto-2.2.0.zip
 
 ### Snips NLU ###
-snips_nlu download fr
+snips-nlu download fr
 snips-nlu generate-dataset fr dataset/default.yml > dataset/dataset.json
 # Install prebuilt entities
+# Link them manually as they are not available anymore from online source
 #snips-nlu download-entity snips/city fr
+snips-nlu link $(pip show snips_nlu | grep "Location:" | cut -d " " -f2)/snips_nlu_city_fr City_fr
+snips-nlu link $(pip show snips_nlu | grep "Location:" | cut -d " " -f2)/snips_nlu_country_fr Country_fr
+snips-nlu link $(pip show snips_nlu | grep "Location:" | cut -d " " -f2)/snips_nlu_region_fr Region_fr
+snips-nlu link $(pip show snips_nlu | grep "Location:" | cut -d " " -f2)/snips_nlu_musicalbum_fr MusicAlbum_fr
+snips-nlu link $(pip show snips_nlu | grep "Location:" | cut -d " " -f2)/snips_nlu_musicartist_fr MusicArtist_fr
+snips-nlu link $(pip show snips_nlu | grep "Location:" | cut -d " " -f2)/snips_nlu_musictrack_fr MusicTrack_fr
+
 
 ### configure client ###
 CONFIG_FILE=$APP_PATH/cipher_hearing/config.ini

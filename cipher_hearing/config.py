@@ -18,7 +18,7 @@ class ClientConfig(ConfigFile):
             fallback='UNKNOWN')
 
         self.ICON = self.get('GENERAL', 'ICON', 
-            fallback='fab fa-microphone')
+            fallback='fas fa-microphone')
     
         self.MQTT_BROKER_URL = self.get('MQTT_BROKER', 'URL', 
             fallback='localhost')
@@ -47,7 +47,7 @@ class ClientConfig(ConfigFile):
         self.SPEECH_TIMEOUT = self.getfloat('SOUND', 'SPEECH_TIMEOUT', 
             fallback=2.0)
 
-        self.DEBUG = self.getboolean('CLIENT', 'DEBUG', 
+        self.DEBUG = self.getboolean('GENERAL', 'DEBUG', 
             fallback=False)
 
 

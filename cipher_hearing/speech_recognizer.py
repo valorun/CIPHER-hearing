@@ -1,7 +1,7 @@
 import logging
 import json
 import vosk
-from snips_nlu import SnipsNLUEngine
+from snips_nlu import SnipsNLUEngine, load_resources
 from snips_nlu.default_configs import CONFIG_FR
 
 from .listener import Listener
@@ -51,7 +51,7 @@ class SpeechRecognizer():
         """
         wake_word_result = self.wakeword_detector.detect(data)
         if wake_word_result is not None:
-            logging.info("Wakeword detected at %s%%", wake_word_result['raven']['probability']*100)
+            logging.info("Wakeword detected at %.2s%%", wake_word_result['raven']['probability']*100)
             self.on_wakeword()
             logging.debug("Wakeword timed out")
 

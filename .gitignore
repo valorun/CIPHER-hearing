@@ -1,6 +1,8 @@
 __pycache__
 *.log
 *.pyc
+*.json
+*.ini
 venv/
 vosk-model-*
 rhasspy-wake-raven/
