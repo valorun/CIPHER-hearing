@@ -35,6 +35,7 @@ class Listener:
             if self.vad.is_speech(data, self.samplerate):
                 end = time.time() + self.speech_timeout
             current = time.time()
+            time.sleep(0.01)
         #print(end - start)
         return recorded_data
         
@@ -44,6 +45,7 @@ class Listener:
             while self.listening.locked():
                 data = Listener.q.get()
                 if self.on_noise is not None:
+
                     self.on_noise(data)
 
     def start(self):
