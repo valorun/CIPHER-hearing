@@ -84,7 +84,7 @@ snips-nlu link $(pip show snips_nlu | grep "Location:" | cut -d " " -f2)/snips_n
 ### configure client ###
 CONFIG_FILE=$APP_PATH/cipher_hearing/config.ini
 
-read -p "Raspberry id [UNKNOWN]: " id
+read -p "MQTT client id [UNKNOWN]: " id
 read -p "MQTT server address [localhost]: " addr
 read -p "MQTT server port [1883]: " port
 id=${id:-UNKNOWN}
