@@ -40,16 +40,6 @@ utterances:
 
 ---
 type: intent
-name: nom
-utterances:
-  - Comment t'appelles-tu ?
-  - Quel est ton nom ?
-  - Dis-moi ton nom
-  - C'est quoi ton prénom ?
-
-
----
-type: intent
 name: meteo
 slots:
   - name: location
@@ -68,6 +58,14 @@ name: date
 utterances:
   - Quel jour sommes nous ?
   - On est quel jour ?
+
+---
+type: intent
+name: heure
+utterances:
+  - Quelle heure est-il ?
+  - Il est quelle heure ?
+  - Dis-moi l'heure
 
 ---
 type: entity

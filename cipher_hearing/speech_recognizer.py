@@ -14,7 +14,11 @@ class SpeechRecognizer():
         self.listener = Listener(samplerate, self.on_noise)
         self.wakeword_detector = wakeword_detector
         self.nlu_engine = SnipsNLUEngine(config=CONFIG_FR)
-        self.nlu_engine.fit(json.load(open(nlu_dataset)))
+        data = json.load(open(nlu_dataset))
+        self.nlu_engine.fit(data)
+        intents = list(data['intents'].keys())
+        logging.info(f"Loaded {len(intents)} intents")
+        self.client.publish('server/hearing/register', json.dumps(intents))
 
     def train_nlu(self, dataset):
         self.nlu_engine = self.nlu_engine.fit(dataset)
