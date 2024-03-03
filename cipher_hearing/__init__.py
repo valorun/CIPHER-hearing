@@ -14,38 +14,37 @@ mqtt = None
 def create_app(debug=False):
     global mqtt
 
-    mqtt = Mqtt.Client(client_config.MQTT_CLIENT_ID)
+    mqtt = Mqtt.Client(Mqtt.CallbackAPIVersion.VERSION2, client_id=client_config.MQTT_CLIENT_ID)
    
     if not exists(client_config.WAKEWORD_MODEL_PATH):
         logging.error("No wakeword model found ! Exiting ...")
         exit(1)
-
+    print(client_config.VOSK_MODEL_PATH)
     if not exists(client_config.VOSK_MODEL_PATH):
         logging.error("No vosk model found ! Exiting ...")
         exit(1)
-
+    wakeword_detector = None
     wakeword_detector = WakeDetector(client_config.RAVEN_PATH, 
                                     client_config.WAKEWORD_MODEL_PATH, 
                                     client_config.WAKEWORD_THRESHOLD, 
                                     client_config.SAMPLERATE)
     recognizer = SpeechRecognizer(client_config.VOSK_MODEL_PATH, 
                                     wakeword_detector, 
-                                    client_config.NLU_DATASET, 
                                     mqtt, 
                                     client_config.SAMPLERATE)
 
-    def on_disconnect(client, userdata, rc):
+    def on_disconnect(client, userdata, flags, reason_code, properties):
         """
         Function called when the client disconnect from the server.
         """
         recognizer.stop()
         logging.info("Disconnected from server")
 
-    def on_connect(client, userdata, flags, rc):
+    def on_connect(client, userdata, flags, reason_code, properties):
         """
         Function called when the client connect to the server.
         """
-        logging.info("Connected with result code " + str(rc))
+        logging.info("Connected with result code " + str(reason_code))
         client.subscribe('server/connect')
         client.subscribe('client/' + client_config.MQTT_CLIENT_ID + '/#')
         notify_server_connection()

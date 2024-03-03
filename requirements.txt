@@ -1,15 +1,5 @@
-./pkgs/scikit_learn-0.22.1-cp37-cp37m-linux_armv7l.whl
-./pkgs/snips_nlu_utils-0.9.1-cp37-cp37m-linux_armv7l.whl
-./pkgs/snips_nlu_parsers-0.4.3-cp37-cp37m-linux_armv7l.whl
-./pkgs/snips_nlu-0.20.2-py3-none-any.whl
-./pkgs/snips_entities/snips_nlu_city_fr-0.2.0.tar.gz 
-./pkgs/snips_entities/snips_nlu_country_fr-0.2.0.tar.gz
-./pkgs/snips_entities/snips_nlu_region_fr-0.2.0.tar.gz
-./pkgs/snips_entities/snips_nlu_musicalbum_fr-0.2.1.tar.gz
-./pkgs/snips_entities/snips_nlu_musicartist_fr-0.2.1.tar.gz
-./pkgs/snips_entities/snips_nlu_musictrack_fr-0.2.1.tar.gz
 sounddevice==0.4.1
 SoundFile==0.10.3.post1
-paho-mqtt==1.5.1
+paho-mqtt==2.0.0
 vosk==0.3.27
 webrtcvad==2.0.10

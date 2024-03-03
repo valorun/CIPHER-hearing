@@ -36,16 +36,14 @@ class ClientConfig(ConfigFile):
             fallback=join(self.RAVEN_PATH, 'keyword-dir'))
         self.SAMPLERATE = self.getint('SOUND', 'SAMPLERATE', 
             fallback=16000)
-        self.NLU_DATASET = self.get('RECOGNIZER', 'NLU_DATASET',
-            fallback=join(dirname(dirname(__file__)), 'dataset/default.json'))
         self.VOSK_MODEL_PATH = self.get('RECOGNIZER', 'VOSK_MODEL_PATH',
-            fallback=join(dirname(dirname(__file__)), 'vosk-model-fr-0.6-linto-2.2.0'))
+            fallback=join(dirname(dirname(__file__)), 'vosk_model'))
 
 
         self.WAKEWORD_THRESHOLD = self.getfloat('WAKEWORD', 'WAKEWORD_THRESHOLD', 
             fallback=0.4)
         self.SPEECH_TIMEOUT = self.getfloat('SOUND', 'SPEECH_TIMEOUT', 
-            fallback=2.0)
+            fallback=1.0)
 
         self.DEBUG = self.getboolean('GENERAL', 'DEBUG', 
             fallback=False)
