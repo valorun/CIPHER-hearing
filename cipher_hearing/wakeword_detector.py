@@ -1,39 +1,52 @@
-import subprocess
-import json
-import errno
-import os
-from os.path import join
+import numpy as np
+import torch
+import torch.nn as nn
+from sonopy import mfcc_spec
+
+
+class MFCC(nn.Module):
+
+    def __init__(self, sample_rate, fft_size=400, window_stride=(400, 200), num_filt=40, num_coeffs=40):
+        super(MFCC, self).__init__()
+        self.sample_rate = sample_rate
+        self.window_stride = window_stride
+        self.fft_size = fft_size
+        self.num_filt = num_filt
+        self.num_coeffs = num_coeffs
+        self.mfcc = lambda x: mfcc_spec(
+            x, self.sample_rate, self.window_stride,
+            self.fft_size, self.num_filt, self.num_coeffs
+        )
+    
+    def forward(self, x):
+        return torch.Tensor(self.mfcc(x.squeeze(0).numpy())).transpose(0, 1).unsqueeze(0)
+
+
+def get_featurizer(sample_rate):
+    return MFCC(sample_rate=sample_rate)
 
 class WakeDetector():
-    def __init__(self, raven_path, wakeword_model_path, threshold, samplerate=16000):
-        self.raven_path = join(raven_path, 'bin', 'rhasspy-wake-raven')
-        self.raven_args = ['--keyword', wakeword_model_path, '--probability-threshold', str(threshold)]
-        self.start()
-
-    def start(self):
-        raven_command = [self.raven_path] + self.raven_args
-        self.raven_proc = subprocess.Popen(
-            raven_command, stdin=subprocess.PIPE, stdout=subprocess.PIPE
-        )
-        os.set_blocking(self.raven_proc.stdout.fileno(), False)
-
-    def stop(self):
-        self.raven_proc.terminate()
-        self.raven_proc.wait()
+    def __init__(self, wakeword_model_path, threshold, samplerate=16000):
+        self.threshold = threshold
+        self.featurizer = get_featurizer(sample_rate=samplerate)
+        self.model = torch.jit.load(wakeword_model_path)
+        self.model.eval().to('cpu') 
+        self.detect_in_row = 0
 
     def detect(self, data):
-        try:
-            self.raven_proc.stdin.write(data)
-            #self.raven_proc.stdin.flush()
-        except IOError as e:
-            if e.errno == errno.EPIPE or e.errno == errno.EINVAL:
-                raise
+        prediction = self.predict(data)
+        return prediction
 
-        if self.raven_proc.stdout is not None:
-            try:
-                result = self.raven_proc.stdout.readline()
-                if result != b'':
-                    return json.loads(result)
-            except Exception as e:
-                raise
-        return None
+    def predict(self, audio):
+        with torch.no_grad():
+            #waveform, _ = torchaudio.load(fname, normalize=False)
+            # waveform = waveform.type('torch.FloatTensor')
+            #mfcc = self.featurizer(waveform).transpose(1, 2).transpose(0, 1)
+            #print(audio)
+            # TODO: read from buffer instead of saving and loading file
+            #waveform = torch.Tensor([np.frombuffer(a, dtype=np.int16) for a in audio]).flatten()
+            waveform = torch.Tensor(np.frombuffer(audio, dtype=np.int16)).flatten()
+            mfcc = self.featurizer(waveform).transpose(1, 2).transpose(0, 1)#.unsqueeze(1)
+            out = self.model(mfcc)
+            pred = torch.round(torch.sigmoid(out))
+            return pred.item()

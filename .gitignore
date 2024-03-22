@@ -1,8 +1,23 @@
-__pycache__
-*.log
-*.pyc
-*.json
-*.ini
-venv/
 vosk-model-*
-rhasspy-wake-raven/
+
+*.pyc
+*.pyo
+*.swp
+*~
+
+**/__pycache__
+
+*.log
+*.ini
+*.wav
+*.mp3
+*.jit
+*.pt
+*.parquet
+
+# Virtual environments
+env
+venv
+
+# Env Vars
+*.env*

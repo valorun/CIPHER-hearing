@@ -36,14 +36,15 @@ class SpeechRecognizer:
         """
         Function called when some noise is detected in the microphone.
         """
-        self.on_wakeword()
+        #self.on_wakeword()
         wake_word_result = self.wakeword_detector.detect(data)
-        if wake_word_result is not None:
-            logging.info(
-                "Wakeword detected at %.2s%%",
-                wake_word_result["raven"]["probability"] * 100,
-            )
-            self.on_wakeword()
+        print(wake_word_result)
+        if wake_word_result:
+            #logging.info(
+            #    "Wakeword detected at %.2s%%",
+            #    wake_word_conf * 100,
+            #)
+            #self.on_wakeword()
             logging.debug("Wakeword timed out")
 
     def start(self):

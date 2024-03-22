@@ -1,11 +1,12 @@
 import json
 import logging
-import paho.mqtt.client as Mqtt
-from os.path import exists
-from logging.handlers import RotatingFileHandler
 from logging.config import dictConfig
-from .config import client_config
+from logging.handlers import RotatingFileHandler
+from os.path import exists
 
+import paho.mqtt.client as Mqtt
+
+from .config import client_config
 from .speech_recognizer import SpeechRecognizer
 from .wakeword_detector import WakeDetector
 
@@ -15,17 +16,14 @@ def create_app(debug=False):
     global mqtt
 
     mqtt = Mqtt.Client(Mqtt.CallbackAPIVersion.VERSION2, client_id=client_config.MQTT_CLIENT_ID)
-   
     if not exists(client_config.WAKEWORD_MODEL_PATH):
         logging.error("No wakeword model found ! Exiting ...")
         exit(1)
-    print(client_config.VOSK_MODEL_PATH)
     if not exists(client_config.VOSK_MODEL_PATH):
         logging.error("No vosk model found ! Exiting ...")
         exit(1)
     wakeword_detector = None
-    wakeword_detector = WakeDetector(client_config.RAVEN_PATH, 
-                                    client_config.WAKEWORD_MODEL_PATH, 
+    wakeword_detector = WakeDetector(client_config.WAKEWORD_MODEL_PATH, 
                                     client_config.WAKEWORD_THRESHOLD, 
                                     client_config.SAMPLERATE)
     recognizer = SpeechRecognizer(client_config.VOSK_MODEL_PATH, 

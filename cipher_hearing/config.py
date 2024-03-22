@@ -1,5 +1,5 @@
 from os.path import isfile, join, exists, dirname
-from configparser import ConfigParser, _UNSET
+from configparser import ConfigParser
 from .constants import CONFIG_FILE
 
 class ConfigFile(ConfigParser):
@@ -29,11 +29,8 @@ class ClientConfig(ConfigFile):
         self.LOG_FILE = self.get('GENERAL', 'LOG_FILE', 
             fallback=join(dirname(__file__), 'app.log'))
 
-
-        self.RAVEN_PATH = self.get('WAKEWORD', 'RAVEN_PATH', 
-            fallback=join(dirname(dirname(__file__)), 'rhasspy-wake-raven'))
-        self.WAKEWORD_MODEL_PATH = self.get('WAKEWORD', 'RAVEN_PATH', 
-            fallback=join(self.RAVEN_PATH, 'keyword-dir'))
+        self.WAKEWORD_MODEL_PATH = self.get('WAKEWORD', 'MODEL_PATH', 
+            fallback=join(dirname(dirname(__file__)), 'keyword-dir'))
         self.SAMPLERATE = self.getint('SOUND', 'SAMPLERATE', 
             fallback=16000)
         self.VOSK_MODEL_PATH = self.get('RECOGNIZER', 'VOSK_MODEL_PATH',

@@ -26,9 +26,7 @@ add_to_startup(){
 ### requirements ###
 apt-get -y install "python3"
 apt-get -y install "python3-pip"
-apt-get -y install "python3-numpy"
-apt-get -y install "python3-scipy"
-apt-get -y install "libportaudio2"
+
 
 APP_PATH=$(cd $(dirname "$0") && pwd)
 echo "Application path: $APP_PATH"

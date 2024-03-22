@@ -15,6 +15,7 @@ class Listener:
         self.listening = Lock()
         self.vad = Vad()
         self.vad.set_mode(3) # very restrictive filtering
+        self.wakeword_duration = 1
 
     @staticmethod
     def _device_callback(indata, frames, time, status):
@@ -41,12 +42,26 @@ class Listener:
         
     def _start(self):
         self.listening.acquire()
+        recorded_data = b'' # rolling buffer
+
         with sd.RawInputStream(samplerate=self.samplerate, channels=1, callback=Listener._device_callback, dtype='int16', blocksize=int(self.samplerate * 0.03)):
             while self.listening.locked():
                 data = Listener.q.get()
-                if self.on_noise is not None:
 
-                    self.on_noise(data)
+                if self.on_noise is not None:
+                    recorded_data += data
+
+                    if len(recorded_data) > self.samplerate * self.wakeword_duration:
+                        # remove first values to keep only few sec
+                        recorded_data = recorded_data[-self.samplerate*self.wakeword_duration:]
+
+                    #print(len(recorded_data))
+                    # Noise is detected when there is enough data
+                    # and when VAD confirm there is speech in the last frame
+                    if len(recorded_data) >= self.samplerate * self.speech_timeout \
+                            and self.vad.is_speech(data, self.samplerate):
+                        self.on_noise(recorded_data)
+
 
     def start(self):
         Thread(target=self._start).start()
