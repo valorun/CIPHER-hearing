@@ -15,7 +15,7 @@ class Listener:
         self.listening = Lock()
         self.vad = Vad()
         self.vad.set_mode(3) # very restrictive filtering
-        self.wakeword_duration = 1
+        self.wakeword_duration = 2 * 2
 
     @staticmethod
     def _device_callback(indata, frames, time, status):
@@ -54,11 +54,11 @@ class Listener:
                     if len(recorded_data) > self.samplerate * self.wakeword_duration:
                         # remove first values to keep only few sec
                         recorded_data = recorded_data[-self.samplerate*self.wakeword_duration:]
-
+                        
                     #print(len(recorded_data))
                     # Noise is detected when there is enough data
                     # and when VAD confirm there is speech in the last frame
-                    if len(recorded_data) >= self.samplerate * self.speech_timeout \
+                    if len(recorded_data) >= self.samplerate * self.wakeword_duration \
                             and self.vad.is_speech(data, self.samplerate):
                         self.on_noise(recorded_data)
 

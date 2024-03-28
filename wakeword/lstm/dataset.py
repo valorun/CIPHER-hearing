@@ -3,19 +3,19 @@ import torch
 import torch.nn as nn
 import torchaudio
 from sonopy import mfcc_spec
-
+import numpy as np
 
 class MFCC(nn.Module):
 
-    def __init__(self, samplerate, fft_size=400, window_stride=(400, 200), num_filt=40, num_coeffs=40):
+    def __init__(self, sample_rate, fft_size=400, window_stride=(400, 200), num_filt=5, num_coeffs=5):
         super(MFCC, self).__init__()
-        self.samplerate = samplerate
+        self.sample_rate = sample_rate
         self.window_stride = window_stride
         self.fft_size = fft_size
         self.num_filt = num_filt
         self.num_coeffs = num_coeffs
         self.mfcc = lambda x: mfcc_spec(
-            x, self.samplerate, self.window_stride,
+            x, self.sample_rate, self.window_stride,
             self.fft_size, self.num_filt, self.num_coeffs
         )
     
@@ -23,8 +23,8 @@ class MFCC(nn.Module):
         return torch.Tensor(self.mfcc(x.squeeze(0).numpy())).transpose(0, 1).unsqueeze(0)
 
 
-def get_featurizer(samplerate):
-    return MFCC(samplerate=samplerate)
+def get_featurizer(sample_rate):
+    return MFCC(sample_rate=sample_rate)
 
 
 class RandomCut(nn.Module):
@@ -92,14 +92,14 @@ class SpecAugment(nn.Module):
 class WakeWordData(torch.utils.data.Dataset):
     """Load and process wakeword data"""
 
-    def __init__(self, data, samplerate=8000, valid=False):
-        self.sr = samplerate
-        self.data = data
+    def __init__(self, data_json, sample_rate=8000, valid=False):
+        self.sr = sample_rate
+        self.data = pd.read_json(data_json)
         if valid:
-            self.audio_transform = get_featurizer(samplerate)
+            self.audio_transform = get_featurizer(sample_rate)
         else:
             self.audio_transform = nn.Sequential(
-                get_featurizer(samplerate),
+                get_featurizer(sample_rate),
                 SpecAugment(rate=0.5)
             )
 
@@ -111,22 +111,34 @@ class WakeWordData(torch.utils.data.Dataset):
             idx = idx.item()
 
         try:
-            waveform = self.data[idx]['audio']['array']
-
-            sr = self.data[idx]['audio']['sampling_rate']
-            waveform = torch.from_numpy(waveform)
+            file_path = self.data.audio.iloc[idx]
+            waveform, sr = torchaudio.load(file_path, normalize=False)
             waveform = waveform.type('torch.FloatTensor')
+            #waveform = self.data[idx]['audio']['array']
+
+            #sr = self.data[idx]['audio']['sampling_rate']
+
+            #waveform = torch.from_numpy(waveform)
+            #waveform = waveform.type('torch.DoubleTensor')
             if sr > self.sr:
                 waveform = torchaudio.transforms.Resample(sr, self.sr)(waveform)
             mfcc = self.audio_transform(waveform)
-            label = self.data[idx]['label']
-
+            label = self.data.label.iloc[idx]
+            label = int(label)
         except Exception as e:
             print(str(e), idx)
             return self.__getitem__(torch.randint(0, len(self), (1,)))
 
         return mfcc, label
 
+    def class_weights(self):
+        """Get class weights for imbalanced dataset"""
+        class_counts = self.data.label.value_counts() 
+        class_weights = 1. / class_counts
+        sample_weights = np.array([class_weights[label] for label in self.data.label])
+        sample_weights = torch.from_numpy(sample_weights)
+
+        return sample_weights
 
 rand_cut = RandomCut(max_cut=10)
 
@@ -142,7 +154,7 @@ def collate_fn(data):
     # pad mfccs to ensure all tensors are same size in the time dim
     mfccs = nn.utils.rnn.pad_sequence(mfccs, batch_first=True)  # batch, seq_len, feature
     mfccs = mfccs.transpose(0, 1) # seq_len, batch, feature
-    mfccs = rand_cut(mfccs)
+    #mfccs = rand_cut(mfccs)
     #print(mfccs.shape)
     labels = torch.Tensor(labels)
     return mfccs, labels

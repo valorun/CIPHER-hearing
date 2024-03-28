@@ -38,7 +38,10 @@ def test(test_loader, model, device, epoch):
         for idx, (mfcc, label) in enumerate(test_loader):
             mfcc, label = mfcc.to(device), label.to(device)
             output = model(mfcc)
+            print(label[0])
+            print(output[0][0])
             pred = torch.sigmoid(output)
+            print(pred[0][0])
             acc = binary_accuracy(pred, label)
             preds += torch.flatten(torch.round(pred)).cpu()
             labels += torch.flatten(label).cpu()
@@ -85,33 +88,25 @@ def main(args):
     torch.manual_seed(1)
     device = torch.device('cuda' if use_cuda else 'cpu')
 
-    pos_train_data = load_dataset('parquet', data_files=args.train_positive_data, split='train')
-    neg_train_data = load_dataset('parquet', data_files=args.train_negative_data, split='train')
-
-    pos_test_data = load_dataset('parquet', data_files=args.test_positive_data, split='train')
-    neg_test_data = load_dataset('parquet', data_files=args.test_negative_data, split='train')
-
-    # merge positive and negative data
-    train_data = concatenate_datasets([neg_train_data, pos_train_data])
-    test_data = concatenate_datasets([neg_test_data, pos_test_data])
-
-    train_dataset = WakeWordData(train_data, sample_rate=args.sample_rate, valid=False)
-    test_dataset = WakeWordData(test_data, sample_rate=args.sample_rate, valid=True)
+    train_dataset = WakeWordData(data_json=args.train_data_json, sample_rate=args.sample_rate, valid=False)
+    test_dataset = WakeWordData(data_json=args.test_data_json, sample_rate=args.sample_rate, valid=True)
 
     kwargs = {'num_workers': args.num_workers, 'pin_memory': True} if use_cuda else {}
     train_loader = data.DataLoader(dataset=train_dataset,
                                         batch_size=args.batch_size,
-                                        shuffle=True,
+                                        #shuffle=True,
                                         collate_fn=collate_fn,
+                                        sampler=torch.utils.data.WeightedRandomSampler(train_dataset.class_weights(), len(train_dataset)),
                                         **kwargs)
     test_loader = data.DataLoader(dataset=test_dataset,
                                         batch_size=args.eval_batch_size,
-                                        shuffle=True,
+                                        #shuffle=True,
                                         collate_fn=collate_fn,
+                                        sampler=torch.utils.data.WeightedRandomSampler(test_dataset.class_weights(), len(test_dataset)),
                                         **kwargs)
 
     model_params = {
-        "num_classes": 1, "feature_size": 40, "hidden_size": args.hidden_size,
+        "num_classes": 1, "feature_size": 5, "hidden_size": args.hidden_size,
         "num_layers": 1, "dropout" :0.1, "bidirectional": False
     }   
     model = LSTMWakeWord(**model_params, device=device)
@@ -177,10 +172,8 @@ if __name__ == "__main__":
     parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
     parser.add_argument('--model_name', type=str, default="wakeword", required=False, help='name of model to save')
     parser.add_argument('--save_checkpoint_path', type=str, default=None, help='Path to save the best checkpoint')
-    parser.add_argument('--train_positive_data', type=str, default=None, required=True, help='path to positive train data parquet file')
-    parser.add_argument('--train_negative_data', type=str, default=None, required=True, help='path to negative train data parquet file')
-    parser.add_argument('--test_positive_data', type=str, default=None, required=True, help='path to positive test data parquet file')
-    parser.add_argument('--test_negative_data', type=str, default=None, required=True, help='path to negative test data parquet file')
+    parser.add_argument('--train_data_json', type=str, default=None, required=True, help='path to train data json file')
+    parser.add_argument('--test_data_json', type=str, default=None, required=True, help='path to test data json file')
     parser.add_argument('--no_cuda', action='store_true', default=False, help='disables CUDA training')
     parser.add_argument('--num_workers', type=int, default=1, help='number of data loading workers')
     parser.add_argument('--hidden_size', type=int, default=128, help='lstm hidden size')
