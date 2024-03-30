@@ -41,23 +41,8 @@ else
     echo "No requirements file found."
 fi
 
-### Raven wakeword detector ###
-cd $APP_PATH
-git clone https://github.com/rhasspy/rhasspy-wake-raven.git raven
-mv -n raven/* rhasspy-wake-raven/
-mv -n raven/scripts/* rhasspy-wake-raven/scripts/
-rm -r raven
-cd rhasspy-wake-raven
-./configure
-make
-make install
-source .venv/bin/activate
-
-# record templates, at least 3
-arecord -r 16000 -f S16_LE -c 1 -t raw | \
-    bin/rhasspy-wake-raven --record keyword-dir/
-#arecord -r 16000 -f S16_LE -c 1 -t raw | \
-#    bin/rhasspy-wake-raven --keyword keyword-dir/
+### Rustpotter wakeword detector ###
+curl -L https://github.com/GiviMAD/rustpotter-cli/releases/download/v3.0.2/rustpotter-cli_debian_armv7l -o rustpotter-cli
 
 ### Vosk STT ###
 cd $APP_PATH

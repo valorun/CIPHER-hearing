@@ -23,7 +23,8 @@ def create_app(debug=False):
         logging.error("No vosk model found ! Exiting ...")
         exit(1)
     wakeword_detector = None
-    wakeword_detector = WakeDetector(client_config.WAKEWORD_MODEL_PATH, 
+    wakeword_detector = WakeDetector(client_config.WAKEWORD_SPOTTER_PATH,
+                                    client_config.WAKEWORD_MODEL_PATH, 
                                     client_config.WAKEWORD_THRESHOLD, 
                                     client_config.SAMPLERATE)
     recognizer = SpeechRecognizer(client_config.VOSK_MODEL_PATH, 

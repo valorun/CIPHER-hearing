@@ -11,9 +11,9 @@ vosk-model-*
 *.ini
 *.wav
 *.mp3
-*.jit
-*.pt
+*.rpw
 *.parquet
+**/rustpotter-cli
 
 # Virtual environments
 env

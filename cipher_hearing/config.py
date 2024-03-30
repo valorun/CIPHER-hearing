@@ -29,16 +29,18 @@ class ClientConfig(ConfigFile):
         self.LOG_FILE = self.get('GENERAL', 'LOG_FILE', 
             fallback=join(dirname(__file__), 'app.log'))
 
+        self.WAKEWORD_SPOTTER_PATH = self.get('WAKEWORD', 'SPOTTER_PATH',
+            fallback=join(dirname(dirname(__file__)), 'rustpotter-cli'))
         self.WAKEWORD_MODEL_PATH = self.get('WAKEWORD', 'MODEL_PATH', 
             fallback=join(dirname(dirname(__file__)), 'keyword-dir'))
         self.SAMPLERATE = self.getint('SOUND', 'SAMPLERATE', 
-            fallback=16000)
+            fallback=8000)
         self.VOSK_MODEL_PATH = self.get('RECOGNIZER', 'VOSK_MODEL_PATH',
             fallback=join(dirname(dirname(__file__)), 'vosk_model'))
 
 
         self.WAKEWORD_THRESHOLD = self.getfloat('WAKEWORD', 'WAKEWORD_THRESHOLD', 
-            fallback=0.4)
+            fallback=0.5)
         self.SPEECH_TIMEOUT = self.getfloat('SOUND', 'SPEECH_TIMEOUT', 
             fallback=1.0)
 

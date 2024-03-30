@@ -1,21 +1,30 @@
-from multiprocessing import Queue
-from threading import Thread, Lock
-from webrtcvad import Vad
 import time
+from collections import deque
+from multiprocessing import Queue
+from threading import Lock, Thread
+
 import sounddevice as sd
+from webrtcvad import Vad
+
 from .config import client_config
 
 
 class Listener:
     q = Queue()
+
     def __init__(self, samplerate, on_noise=None):
         self.samplerate = samplerate
         self.speech_timeout = client_config.SPEECH_TIMEOUT
         self.on_noise = on_noise
         self.listening = Lock()
         self.vad = Vad()
-        self.vad.set_mode(3) # very restrictive filtering
-        self.wakeword_duration = 2 * 2
+        self.vad.set_mode(3)  # very restrictive filtering
+        self.blocksize = int(
+            samplerate * 0.03
+        )  # VAD only accept 10, 20 or 30ms per frame
+        self.on_noise_rate = int(
+            round(samplerate * 0.5 / self.blocksize)
+        )  # pass data to on_noise every x frames (here every 500ms)
 
     @staticmethod
     def _device_callback(indata, frames, time, status):
@@ -25,7 +34,7 @@ class Listener:
         Listener.q.put(bytes(indata))
 
     def record(self):
-        recorded_data = b''
+        recorded_data = b""
         current = time.time()
         end = time.time() + self.speech_timeout
 
@@ -37,31 +46,41 @@ class Listener:
                 end = time.time() + self.speech_timeout
             current = time.time()
             time.sleep(0.01)
-        #print(end - start)
+        # print(end - start)
         return recorded_data
-        
+
     def _start(self):
         self.listening.acquire()
-        recorded_data = b'' # rolling buffer
+        recorded_data = deque(
+            maxlen=int(self.samplerate / self.blocksize)
+        )  # rolling buffer, frames from last second to match VAD window size
 
-        with sd.RawInputStream(samplerate=self.samplerate, channels=1, callback=Listener._device_callback, dtype='int16', blocksize=int(self.samplerate * 0.03)):
+        on_noise_counter = 0
+        with sd.RawInputStream(
+            samplerate=self.samplerate,
+            channels=1,
+            callback=Listener._device_callback,
+            dtype="int16",
+            blocksize=self.blocksize,
+        ):
             while self.listening.locked():
                 data = Listener.q.get()
 
                 if self.on_noise is not None:
-                    recorded_data += data
+                    is_speech = self.vad.is_speech(data, self.samplerate)
+                    recorded_data.append((data, is_speech))
+                    on_noise_counter += 1
 
-                    if len(recorded_data) > self.samplerate * self.wakeword_duration:
-                        # remove first values to keep only few sec
-                        recorded_data = recorded_data[-self.samplerate*self.wakeword_duration:]
-                        
-                    #print(len(recorded_data))
+                    num_voiced = len([f for f, speech in recorded_data if speech])
                     # Noise is detected when there is enough data
-                    # and when VAD confirm there is speech in the last frame
-                    if len(recorded_data) >= self.samplerate * self.wakeword_duration \
-                            and self.vad.is_speech(data, self.samplerate):
-                        self.on_noise(recorded_data)
-
+                    # and when VAD confirm there is speech in a significant portion of the data
+                    # and on_noise hasn't been called recently
+                    if (
+                        num_voiced > 0.9 * recorded_data.maxlen
+                        and on_noise_counter >= self.on_noise_rate
+                    ):
+                        self.on_noise(b"".join([f[0] for f in recorded_data]))
+                        on_noise_counter = 0
 
     def start(self):
         Thread(target=self._start).start()
