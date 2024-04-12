@@ -19,15 +19,13 @@ def create_app(debug=False):
     if not exists(client_config.WAKEWORD_MODEL_PATH):
         logging.error("No wakeword model found ! Exiting ...")
         exit(1)
-    if not exists(client_config.VOSK_MODEL_PATH):
-        logging.error("No vosk model found ! Exiting ...")
-        exit(1)
+
     wakeword_detector = None
     wakeword_detector = WakeDetector(client_config.WAKEWORD_SPOTTER_PATH,
                                     client_config.WAKEWORD_MODEL_PATH, 
                                     client_config.WAKEWORD_THRESHOLD, 
                                     client_config.SAMPLERATE)
-    recognizer = SpeechRecognizer(client_config.VOSK_MODEL_PATH, 
+    recognizer = SpeechRecognizer(client_config.WHISPER_MODEL,
                                     wakeword_detector, 
                                     mqtt, 
                                     client_config.SAMPLERATE)
@@ -47,7 +45,7 @@ def create_app(debug=False):
         client.subscribe('server/connect')
         client.subscribe('client/' + client_config.MQTT_CLIENT_ID + '/#')
         notify_server_connection()
-        recognizer.start()
+        #recognizer.start()
 
     def notify_server_connection():
         """
@@ -74,6 +72,9 @@ def create_app(debug=False):
             logging.info("Stopped speech recognition")
         elif topic == 'client/' + client_config.MQTT_CLIENT_ID + '/exit':
             exit(0)
+        elif topic == 'client/' + client_config.MQTT_CLIENT_ID + '/trigger':
+            logging.info("Triggered wakeword")
+            recognizer.on_wakeword()
 
     mqtt.on_connect = on_connect
     mqtt.on_message = on_message

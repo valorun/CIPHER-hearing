@@ -17,6 +17,9 @@ class WakeDetector:
         self.spotter_args = [
             "test",
             "-e",
+            "-g",
+            "-m",
+            "3",
             "-t",
             str(threshold),
             wakeword_model_path,
@@ -26,7 +29,6 @@ class WakeDetector:
     def _start_proc(self):
         spotter_command = [self.spotter_path] + self.spotter_args
         self.spotter_proc = subprocess.Popen(spotter_command, stdout=subprocess.PIPE)
-        os.set_blocking(self.spotter_proc.stdout.fileno(), False)
 
     def stop(self):
         self.spotter_proc.terminate()
@@ -40,6 +42,7 @@ class WakeDetector:
             np.frombuffer(data, dtype=np.int16).astype(np.float32) / 32767.0,
             self.samplerate,
         )
+        #print(self.tempfile_name)
         try:
             self._start_proc()
             # wait process to finish

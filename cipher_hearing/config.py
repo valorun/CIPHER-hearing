@@ -15,7 +15,7 @@ class ClientConfig(ConfigFile):
         ConfigFile.__init__(self, filepath)
 
         self.MQTT_CLIENT_ID = self.get('GENERAL', 'MQTT_CLIENT_ID', 
-            fallback='UNKNOWN')
+            fallback='hearing')
 
         self.ICON = self.get('GENERAL', 'ICON', 
             fallback='fas fa-microphone')
@@ -34,9 +34,9 @@ class ClientConfig(ConfigFile):
         self.WAKEWORD_MODEL_PATH = self.get('WAKEWORD', 'MODEL_PATH', 
             fallback=join(dirname(dirname(__file__)), 'keyword-dir'))
         self.SAMPLERATE = self.getint('SOUND', 'SAMPLERATE', 
-            fallback=8000)
-        self.VOSK_MODEL_PATH = self.get('RECOGNIZER', 'VOSK_MODEL_PATH',
-            fallback=join(dirname(dirname(__file__)), 'vosk_model'))
+            fallback=16000)
+        self.WHISPER_MODEL = self.get('STT', 'WHISPER_MODEL',
+            fallback='small')
 
 
         self.WAKEWORD_THRESHOLD = self.getfloat('WAKEWORD', 'WAKEWORD_THRESHOLD', 

@@ -21,3 +21,6 @@ venv
 
 # Env Vars
 *.env*
+# pixi environments
+.pixi
+
