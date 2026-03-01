@@ -1,5 +1,3 @@
-vosk-model-*
-
 *.pyc
 *.pyo
 *.swp
@@ -11,16 +9,21 @@ vosk-model-*
 *.ini
 *.wav
 *.mp3
-*.rpw
 *.parquet
-**/rustpotter-cli
+
+# Modèles wakeword
+wakeword-models/
+models/*.tflite
+models/*.onnx
+
+# Données d'entraînement
+data/
 
 # Virtual environments
 env
 venv
 
 # Env Vars
-*.env*
+.env*
 # pixi environments
 .pixi
-

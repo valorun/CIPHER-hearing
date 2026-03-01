@@ -9,14 +9,14 @@ platforms = ["linux-64"]
 [tasks]
 
 [dependencies]
-python = "==3.11"
+python = "==3.12"
 numpy = ">=1.26.4,<1.27"
-av = "==10.0.0"
+av = "*"
 
 [pypi-dependencies]
 sounddevice = "==0.4.1"
-SoundFile = "==0.10.3.post1"
+soundfile = "==0.10.3.post1"
 paho-mqtt = "==2.0.0"
-vosk = "==0.3.45"
-webrtcvad = "==2.0.10"
 faster-whisper = "*"
+openwakeword = "*"
+webrtcvad = "*"

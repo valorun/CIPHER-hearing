@@ -41,15 +41,6 @@ else
     echo "No requirements file found."
 fi
 
-### Rustpotter wakeword detector ###
-curl -L https://github.com/GiviMAD/rustpotter-cli/releases/download/v3.0.2/rustpotter-cli_debian_armv7l -o rustpotter-cli
-
-### Vosk STT ###
-cd $APP_PATH
-source $APP_PATH/venv/bin/activate
-curl -LO https://alphacephei.com/vosk/models/vosk-model-small-fr-0.22.zip
-unzip vosk-model-small-fr-0.22.zip
-
 ### configure client ###
 CONFIG_FILE=$APP_PATH/cipher_hearing/config.ini
 
