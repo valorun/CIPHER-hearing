@@ -3,8 +3,8 @@ from collections import deque
 from multiprocessing import Queue
 from threading import Lock, Thread
 
+import numpy as np
 import sounddevice as sd
-from webrtcvad import Vad
 
 from .config import client_config
 
@@ -12,84 +12,83 @@ from .config import client_config
 class Listener:
     q = Queue()
 
-    def __init__(self, samplerate, on_noise=None):
-        self.samplerate = samplerate
+    def __init__(self, samplerate, wakeword_detector=None, on_audio_frame=None):
+        self.device_samplerate = samplerate
+        self.vad_samplerate = 16000
+        
+        self.downsample_ratio = max(1, int(self.device_samplerate / self.vad_samplerate))
+        
         self.speech_timeout = client_config.SPEECH_TIMEOUT
-        self.on_noise = on_noise
+        self.on_audio_frame = on_audio_frame
         self.listening = Lock()
-        self.vad = Vad()
-        self.vad.set_mode(2)  # restrictive filtering
-        self.blocksize = int(
-            samplerate * 0.03
-        )  # VAD only accept 10, 20 or 30ms per frame
-        self.on_noise_rate = int(
-            round(samplerate * 0.5 / self.blocksize)
-        )  # pass data to on_noise every x frames (here every 200ms)
+        
+        self.wakeword_detector = wakeword_detector
+        
+        # OpenWakeWord works best with 80ms frames (1280 samples at 16kHz)
+        self.frame_size = 1280
+        self.device_blocksize = self.frame_size * self.downsample_ratio
+        
+        self.vad_threshold = float(client_config.VAD_THRESHOLD) if client_config.VAD_THRESHOLD is not None else 0.5
 
     @staticmethod
     def _device_callback(indata, frames, time, status):
-        """
-        This is called (from a separate thread) for each audio block.
-        """
         Listener.q.put(bytes(indata))
+        
+    def _process_audio(self, data: bytes) -> tuple[bytes, np.ndarray]:
+        audio_data = np.frombuffer(data, dtype=np.int16)
+        
+        if self.downsample_ratio > 1:
+            audio_data = audio_data[::self.downsample_ratio]
+            
+        return audio_data.tobytes(), audio_data
 
     def record(self):
         recorded_data = b""
         vad_buffer = deque(
-            maxlen=int(self.samplerate / self.blocksize * self.speech_timeout)
-        )  # rolling buffer, frames from last seconds to match VAD window size
+            maxlen=int(self.vad_samplerate / self.frame_size * self.speech_timeout)
+        )
         current = time.time()
         end = time.time() + (self.speech_timeout * 2)
 
-
-        # record until no sound is detected or time is over
         while current <= end:
-            data = Listener.q.get()
-            recorded_data += data
+            raw_data = Listener.q.get()
+            data_16k_bytes, audio_16k = self._process_audio(raw_data)
+            
+            recorded_data += data_16k_bytes
 
-            vad_buffer.append(self.vad.is_speech(data, self.samplerate))
+            # Use the VAD from openWakeWord (integrated in WakeDetector)
+            if self.wakeword_detector and hasattr(self.wakeword_detector.model, 'vad'):
+                is_speech = self.wakeword_detector.model.vad.predict(audio_16k, frame_size=self.frame_size) >= self.vad_threshold
+            else:
+                is_speech = True  # If no VAD available, assume speech
+                
+            vad_buffer.append(is_speech)
 
             num_voiced = len([speech for speech in vad_buffer if speech])
 
-            if num_voiced > 0.9 * vad_buffer.maxlen:
+            if vad_buffer.maxlen is not None and num_voiced > 0.9 * vad_buffer.maxlen:
                 end = time.time() + self.speech_timeout
             current = time.time()
-            time.sleep(0.03)
-        # print(end - start)
+            time.sleep(0.08)
+            
         return recorded_data
 
     def _start(self):
         self.listening.acquire()
-        recorded_data = deque(
-            maxlen=int(self.samplerate / self.blocksize) * 2
-        )  # rolling buffer, frames from last seconds to match VAD window size
-
-        on_noise_counter = 0
+        
         with sd.RawInputStream(
-            samplerate=self.samplerate,
+            samplerate=self.device_samplerate,
             channels=1,
             callback=Listener._device_callback,
             dtype="int16",
-            blocksize=self.blocksize,
+            blocksize=self.device_blocksize,
         ):
             while self.listening.locked():
-                data = Listener.q.get()
+                raw_data = Listener.q.get()
+                data_16k_bytes, audio_16k = self._process_audio(raw_data)
 
-                if self.on_noise is not None:
-                    is_speech = self.vad.is_speech(data, self.samplerate)
-                    recorded_data.append((data, is_speech))
-                    on_noise_counter += 1
-
-                    num_voiced = len([f for f, speech in recorded_data if speech])
-                    # Noise is detected when there is enough data
-                    # and when VAD confirm there is speech in a significant portion of the data
-                    # and on_noise hasn't been called recently
-                    if (
-                        num_voiced > 0.6 * recorded_data.maxlen
-                        and on_noise_counter >= self.on_noise_rate
-                    ):
-                        self.on_noise(b"".join([f[0] for f in recorded_data]))
-                        on_noise_counter = 0
+                if self.on_audio_frame is not None:
+                    self.on_audio_frame(data_16k_bytes, audio_16k)
 
     def start(self):
         Thread(target=self._start).start()

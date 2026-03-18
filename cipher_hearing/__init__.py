@@ -87,6 +87,7 @@ def setup_logger(debug=False):
 	
 	dictConfig({
         'version': 1,
+        'disable_existing_loggers': False,
         'formatters': {'default': {
             'format': '%(asctime)s %(levelname)-8s [%(name)s] %(message)s',
         }},

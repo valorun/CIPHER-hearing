@@ -30,7 +30,7 @@ class ClientConfig(ConfigFile):
             fallback=join(dirname(__file__), 'app.log'))
 
         self.SAMPLERATE = self.getint('SOUND', 'SAMPLERATE', 
-            fallback=16000)
+            fallback=48000)
         self.WHISPER_MODEL = self.get('STT', 'WHISPER_MODEL',
             fallback='small')
 

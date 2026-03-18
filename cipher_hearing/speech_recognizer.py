@@ -11,8 +11,8 @@ class SpeechRecognizer:
         self.stt = WhisperModel(whisper_model, device="cpu", compute_type="int8")
         self.client = client
         self.samplerate = samplerate
-        self.listener = Listener(samplerate, self.on_noise)
         self.wakeword_detector = wakeword_detector
+        self.listener = Listener(samplerate, wakeword_detector, self.on_audio_frame)
 
     def predict(self, data):
         data = np.frombuffer(data, dtype=np.int16).astype(np.float32) / 32767.0
@@ -25,9 +25,6 @@ class SpeechRecognizer:
         return None
 
     def on_wakeword(self):
-        """
-        Function called when the wake word is detected.
-        """
         self.client.publish("server/hearing/wakeword")
         rec = self.listener.record()
         transcription = self.predict(rec)
@@ -35,12 +32,8 @@ class SpeechRecognizer:
             logging.info("Transcription: '%s'", transcription)
             self.client.publish("server/hearing/transcription", transcription)
 
-    def on_noise(self, data):
-        """
-        Function called when some noise is detected in the microphone.
-        """
-        # self.on_wakeword()
-        wake_word_conf = self.wakeword_detector.detect(data)
+    def on_audio_frame(self, data_16k_bytes, audio_16k):
+        wake_word_conf = self.wakeword_detector.detect(data_16k_bytes)
         if wake_word_conf:
             logging.info(
                 "Wakeword detected at %.2s%%",
