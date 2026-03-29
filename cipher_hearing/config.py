@@ -30,7 +30,7 @@ class ClientConfig(ConfigFile):
             fallback=join(dirname(__file__), 'app.log'))
 
         self.SAMPLERATE = self.getint('SOUND', 'SAMPLERATE', 
-            fallback=48000)
+            fallback=16000)
         self.WHISPER_MODEL = self.get('STT', 'WHISPER_MODEL',
             fallback='small')
 
@@ -40,7 +40,7 @@ class ClientConfig(ConfigFile):
         self.WAKEWORD_MODELS = self.get('WAKEWORD', 'WAKEWORD_MODELS', 
             fallback='')
         self.VAD_THRESHOLD = self.get('WAKEWORD', 'VAD_THRESHOLD', 
-            fallback=None)
+            fallback=0.5)
         self.SPEECH_TIMEOUT = self.getfloat('SOUND', 'SPEECH_TIMEOUT', 
             fallback=1.0)
 

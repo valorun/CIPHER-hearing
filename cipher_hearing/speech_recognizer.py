@@ -5,6 +5,7 @@ from faster_whisper import WhisperModel
 
 from .listener import Listener
 
+logger = logging.getLogger(__name__)
 
 class SpeechRecognizer:
     def __init__(self, whisper_model, wakeword_detector, client, samplerate=16000):
@@ -29,18 +30,18 @@ class SpeechRecognizer:
         rec = self.listener.record()
         transcription = self.predict(rec)
         if transcription is not None:
-            logging.info("Transcription: '%s'", transcription)
+            logger.info("Transcription: '%s'", transcription)
             self.client.publish("server/hearing/transcription", transcription)
 
     def on_audio_frame(self, data_16k_bytes, audio_16k):
         wake_word_conf = self.wakeword_detector.detect(data_16k_bytes)
-        if wake_word_conf:
-            logging.info(
+        if wake_word_conf is not None:
+            logger.info(
                 "Wakeword detected at %.2s%%",
                 wake_word_conf * 100,
             )
             self.on_wakeword()
-            logging.debug("Wakeword timed out")
+            logger.debug("Wakeword timed out")
 
     def start(self):
         self.listener.start()

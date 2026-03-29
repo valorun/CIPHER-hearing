@@ -25,20 +25,16 @@ add_to_startup(){
 
 ### requirements ###
 apt-get -y install "python3"
-apt-get -y install "python3-pip"
-
 
 APP_PATH=$(cd $(dirname "$0") && pwd)
 echo "Application path: $APP_PATH"
-python3 -m venv venv --system-site-packages
-source $APP_PATH/venv/bin/activate
 
-if [ -e $APP_PATH/requirements.txt ]
-then
-    echo "Installing python dependencies ..."
-    $APP_PATH/venv/bin/pip3 install -r $APP_PATH/requirements.txt
+if command -v pixi &> /dev/null; then
+    echo "Installing python dependencies via pixi..."
+    pixi install
 else
-    echo "No requirements file found."
+    echo "Error: pixi not found. Please install it first."
+    exit 1
 fi
 
 ### configure client ###
@@ -65,7 +61,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=$APP_PATH
-ExecStart=$APP_PATH/venv/bin/python3 $APP_PATH/app.py
+ExecStart=/usr/bin/env pixi run python $APP_PATH/app.py
 Restart=always
 
 [Install]

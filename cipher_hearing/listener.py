@@ -1,3 +1,4 @@
+import logging
 import time
 from collections import deque
 from multiprocessing import Queue
@@ -5,14 +6,16 @@ from threading import Lock, Thread
 
 import numpy as np
 import sounddevice as sd
+from scipy.signal import resample_poly
 
 from .config import client_config
 
+logger = logging.getLogger(__name__)
 
 class Listener:
     q = Queue()
 
-    def __init__(self, samplerate, wakeword_detector=None, on_audio_frame=None):
+    def __init__(self, samplerate: int, wakeword_detector=None, on_audio_frame=None):
         self.device_samplerate = samplerate
         self.vad_samplerate = 16000
         
@@ -35,14 +38,17 @@ class Listener:
         Listener.q.put(bytes(indata))
         
     def _process_audio(self, data: bytes) -> tuple[bytes, np.ndarray]:
-        audio_data = np.frombuffer(data, dtype=np.int16)
+        audio_data = np.frombuffer(data, dtype=np.int16).astype(np.float32)
         
         if self.downsample_ratio > 1:
-            audio_data = audio_data[::self.downsample_ratio]
+            # Resample properly
+            num = self.vad_samplerate
+            den = self.device_samplerate
+            audio_data = resample_poly(audio_data, num, den)
             
-        return audio_data.tobytes(), audio_data
+        return audio_data.astype(np.int16).tobytes(), audio_data.astype(np.int16)
 
-    def record(self):
+    def record(self) -> bytes:
         recorded_data = b""
         vad_buffer = deque(
             maxlen=int(self.vad_samplerate / self.frame_size * self.speech_timeout)
@@ -61,6 +67,7 @@ class Listener:
                 is_speech = self.wakeword_detector.model.vad.predict(audio_16k, frame_size=self.frame_size) >= self.vad_threshold
             else:
                 is_speech = True  # If no VAD available, assume speech
+            logger.debug(f"VAD: {is_speech}")
                 
             vad_buffer.append(is_speech)
 
@@ -73,7 +80,7 @@ class Listener:
             
         return recorded_data
 
-    def _start(self):
+    def _start(self) -> None:
         self.listening.acquire()
         
         with sd.RawInputStream(
@@ -90,9 +97,9 @@ class Listener:
                 if self.on_audio_frame is not None:
                     self.on_audio_frame(data_16k_bytes, audio_16k)
 
-    def start(self):
+    def start(self) -> None:
         Thread(target=self._start).start()
 
-    def stop(self):
+    def stop(self) -> None:
         if self.listening.locked():
             self.listening.release()

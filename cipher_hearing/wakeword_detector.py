@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy as np
 import openwakeword
+import openwakeword.utils
 from openwakeword.model import Model
 
 from .config import client_config
@@ -29,7 +30,7 @@ class WakeDetector:
             default_models_dir = Path.home() / ".local" / "share" / "openwakeword" / "models"
             if default_models_dir.exists():
                 models_to_load = [
-                    str(p) for p in default_models_dir.glob("*.tflite")
+                    str(p) for p in default_models_dir.glob("*.onnx")
                 ]
         
         logger.info(f"Loading openwakeword models: {models_to_load}")
@@ -44,11 +45,11 @@ class WakeDetector:
         self.model = Model(**model_kwargs)
 
     def detect(self, data: bytes) -> float | None:
-        audio_data = np.frombuffer(data, dtype=np.int16).astype(np.float32) / 32767.0
+        audio_data = np.frombuffer(data, dtype=np.int16)
 
         prediction = self.model.predict(audio_data)
 
-        for model_name, score in prediction.items():
+        for model_name, score in prediction.items(): # type: ignore
             if score >= self.threshold:
                 logger.debug(f"Wakeword '{model_name}' detected with score {score:.4f}")
                 return score
@@ -57,7 +58,7 @@ class WakeDetector:
 
     @staticmethod
     def download_models(models: list[str] | None = None) -> None:
-        openwakeword.utils.download_models(models=models)
+        openwakeword.utils.download_models(models=models)  # type: ignore
 
 
 def create_wake_detector(config) -> WakeDetector:
@@ -68,7 +69,7 @@ def create_wake_detector(config) -> WakeDetector:
         models_dir = Path(__file__).parent.parent / "models"
         
         for model_name in model_names:
-            model_path = models_dir / f"{model_name}.tflite"
+            model_path = models_dir / f"{model_name}.onnx"
             if model_path.exists():
                 model_paths.append(str(model_path))
             else:
